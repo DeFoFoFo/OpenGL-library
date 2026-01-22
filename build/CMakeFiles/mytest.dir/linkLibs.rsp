@@ -1,1 +1,0 @@
- MyLib/src/libmylib.a -lopengl32 MyLib/extern/glad/libglad.a -lglfw3 MyLib/extern/stb_image/libstbi.a -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

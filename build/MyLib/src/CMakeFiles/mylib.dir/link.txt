@@ -1,2 +1,0 @@
-C:\msys64\mingw64\bin\ar.exe qc libmylib.a CMakeFiles/mylib.dir/Shader.cpp.obj CMakeFiles/mylib.dir/ComputeShader.cpp.obj CMakeFiles/mylib.dir/Camera.cpp.obj
-C:\msys64\mingw64\bin\ranlib.exe libmylib.a
