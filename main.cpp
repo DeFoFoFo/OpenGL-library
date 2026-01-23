@@ -7,13 +7,14 @@
 #include "ComputeShader.hpp"
 #include "Shader.hpp"
 #include "Camera.hpp"
+#include "Boid.hpp"
 
 #include <iostream>
 #include <vector>
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
-mylib::Camera camera{glm::vec3(0.0f, 0.0f, 1000.0f)};
+mylib::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
 
 int main()
 {
@@ -37,23 +38,26 @@ int main()
     }
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
-
-    std::vector<glm::vec2> points;
-    points.reserve(800*600);
-    for (float i{-400}; i < 400; i += 0.25)
+    const float speed = 2;
+    uint32_t num_of_boids{50};
+    std::vector<Boid> boids;
+    boids.reserve(num_of_boids);
+    for (size_t i{1}; i <= num_of_boids; ++i)
     {
-        for (float j{-300}; j < 300; j += 0.25)
-        {
-            points.emplace_back(i, j);
-        }
+        boids.emplace_back(
+            glm::vec3(0.0f, i, 0.0f),
+            speed,
+            glm::vec3(0.0f)
+        );
     }
+    
 
     GLuint SSBO;
     glGenBuffers(1, &SSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
-                points.size() * sizeof(glm::vec2),
-                points.data(),
+                num_of_boids * sizeof(Boid),
+                boids.data(),
                 GL_DYNAMIC_DRAW);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
@@ -81,11 +85,11 @@ int main()
         float time = (float)glfwGetTime();
         dT = time - lastTime;
         lastTime = time;
-        std::cout << 1/dT << " " << points.size() << std::endl;
+        //std::cout << 1/dT << " " << num_of_boids << std::endl;
 
         glUseProgram(comp.ID());
         glUniform1f(glGetUniformLocation(comp.ID(),"time"), time);
-        glDispatchCompute((points.size() + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
+        glDispatchCompute((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
         glClearColor(0.8, 0.5, 0.3, 1.0);
@@ -102,7 +106,7 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_POINTS, 0, points.size());
+        glDrawArrays(GL_POINTS, 0, num_of_boids);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
