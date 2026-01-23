@@ -13,7 +13,7 @@
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
-mylib::Camera camera{glm::vec3(0.0f, 0.0f, 1.0f)};
+mylib::Camera camera{glm::vec3(0.0f, 0.0f, 1000.0f)};
 
 int main()
 {
@@ -40,9 +40,9 @@ int main()
 
     std::vector<glm::vec2> points;
     points.reserve(800*600);
-    for (float i{}; i < 800; i += 1)
+    for (float i{-400}; i < 400; i += 0.25)
     {
-        for (float j{}; j < 600; j += 1)
+        for (float j{-300}; j < 300; j += 0.25)
         {
             points.emplace_back(i, j);
         }
@@ -81,7 +81,7 @@ int main()
         float time = (float)glfwGetTime();
         dT = time - lastTime;
         lastTime = time;
-        std::cout << dT*1000 << std::endl;
+        std::cout << 1/dT << " " << points.size() << std::endl;
 
         glUseProgram(comp.ID());
         glUniform1f(glGetUniformLocation(comp.ID(),"time"), time);
@@ -95,7 +95,7 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)800/600, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)800/600, 0.1f, 1000.0f);
 
         glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
