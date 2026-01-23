@@ -1,9 +1,17 @@
-add_library(glfw STATIC IMPORTED)
+cmake_minimum_required(VERSION 3.20)
 
-set_target_properties(glfw PROPERTIES
-    IMPORTED_LOCATION
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/libglfw3.a
+include(FetchContent)
 
-    INTERFACE_INCLUDE_DIRECTORIES
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+# Disable everything we don't need
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+    glfw
+    GIT_REPOSITORY https://github.com/glfw/glfw.git
+    GIT_TAG 3.3.9
 )
+
+FetchContent_MakeAvailable(glfw)

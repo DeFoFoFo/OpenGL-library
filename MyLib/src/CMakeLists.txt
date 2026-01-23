@@ -14,7 +14,7 @@ target_include_directories(mylib PUBLIC
 target_link_libraries(mylib
     PRIVATE opengl32
     PUBLIC glad
-    PUBLIC glfw3
+    PUBLIC glfw
     PUBLIC stbi
     PUBLIC glm
 )
@@ -23,6 +23,8 @@ target_compile_features(mylib PUBLIC
     cxx_std_20
 )
 
-target_compile_options(mylib PRIVATE
-    -Wall -Wextra -Wpedantic
-)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(mylib PRIVATE
+        -Wall -Wextra -Wpedantic
+    )
+endif()
