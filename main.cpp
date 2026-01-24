@@ -38,37 +38,39 @@ int main()
     }
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
-    const float speed = 2;
-    uint32_t num_of_boids{50};
+    const float speed = 1;
+    uint32_t num_of_boids{10000};
     std::vector<Boid> boids;
     boids.reserve(num_of_boids);
-    for (size_t i{1}; i <= num_of_boids; ++i)
+    for (size_t i{}; i < num_of_boids; ++i)
     {
-        boids.emplace_back(
-            glm::vec3(0.0f, i, 0.0f),
-            speed,
-            glm::vec3(0.0f)
-        );
+        float yPos{10.0f/num_of_boids * i};
+        yPos -= 10.0f/2;
+        boids.emplace_back(glm::vec4(0.0f, yPos, 0.0f, speed));
     }
     
 
-    GLuint SSBO;
-    glGenBuffers(1, &SSBO);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,
-                num_of_boids * sizeof(Boid),
-                boids.data(),
-                GL_DYNAMIC_DRAW);
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO);
+    GLuint SSBO[2];
+    glGenBuffers(2, SSBO);
+    for (int i{}; i < 2; ++i)
+    {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[i]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER,
+                    num_of_boids * sizeof(Boid),
+                    boids.data(),
+                    GL_DYNAMIC_DRAW);
+    }
+    
+    int readIdx = 0;
+    int writeIdx = 1;
 
     // Create VAO
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, SSBO);
+    glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)0);
 
     const GLuint LOCAL_SIZE = 256;
 
@@ -80,17 +82,21 @@ int main()
     float dT{};
     float lastTime{};
 
-
     while (!glfwWindowShouldClose(window)) {
         float time = (float)glfwGetTime();
         dT = time - lastTime;
         lastTime = time;
-        //std::cout << 1/dT << " " << num_of_boids << std::endl;
+        std::cout << 1/dT << " " << num_of_boids << std::endl;
+
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO[readIdx]);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO[writeIdx]);
 
         glUseProgram(comp.ID());
-        glUniform1f(glGetUniformLocation(comp.ID(),"time"), time);
+        glUniform1f(glGetUniformLocation(comp.ID(), "time"), time);
         glDispatchCompute((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+
+        std::swap(readIdx, writeIdx);
 
         glClearColor(0.8, 0.5, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -106,13 +112,16 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)0);
+        glEnableVertexAttribArray(0);
         glDrawArrays(GL_POINTS, 0, num_of_boids);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteBuffers(1, &SSBO);
+    glDeleteBuffers(2, SSBO);
     glDeleteVertexArrays(1, &VAO);
 
     glfwDestroyWindow(window);

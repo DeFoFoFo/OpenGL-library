@@ -4,7 +4,9 @@
 
 struct Boid
 {
-    glm::vec3 pos;
-    float speed;
-    glm::vec3 next_pos;
+    glm::vec4 pos_speed;
+
+    Boid(glm::vec4 pos_speed = glm::vec4(0.0f))
+        : pos_speed{pos_speed}
+    {}
 };
