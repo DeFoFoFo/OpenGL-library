@@ -11,10 +11,12 @@
 
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+int randomNumberWithin(int min, int max);
 
-mylib::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
+mylib::Camera camera{glm::vec3(0.0f, 0.0f, 25.0f)};
 
 int main()
 {
@@ -37,18 +39,27 @@ int main()
         return -1;
     }
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    glfwSwapInterval(1);
 
-    const float speed = 1;
-    uint32_t num_of_boids{10000};
+    const float radius_of_neighbours = 4;
+    uint32_t num_of_boids{20000};
     std::vector<Boid> boids;
     boids.reserve(num_of_boids);
     for (size_t i{}; i < num_of_boids; ++i)
     {
-        float yPos{10.0f/num_of_boids * i};
-        yPos -= 10.0f/2;
-        boids.emplace_back(glm::vec4(0.0f, yPos, 0.0f, speed));
+        float xPos{(float)randomNumberWithin(-10, 10)};
+        float yPos{(float)randomNumberWithin(-10, 10)};
+        float zPos{(float)randomNumberWithin(-10, 10)};
+
+        float xVelocity{(float)randomNumberWithin(-2, 2)};
+        float yVelocity{(float)randomNumberWithin(-2, 2)};
+        float zVelocity{(float)randomNumberWithin(-2, 2)};
+
+        boids.emplace_back(
+            glm::vec4(xPos, yPos, zPos, radius_of_neighbours),
+            glm::vec4(xVelocity, yVelocity, zVelocity, 0.0f)
+        );
     }
-    
 
     GLuint SSBO[2];
     glGenBuffers(2, SSBO);
@@ -64,18 +75,17 @@ int main()
     int readIdx = 0;
     int writeIdx = 1;
 
-    // Create VAO
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)0);
+
+    glBindVertexArray(0);
 
     const GLuint LOCAL_SIZE = 256;
 
-    mylib::ComputeShader comp{"compute.glsl"};
-    mylib::Shader shader{"point_shader.vert", "point_shader.frag"};
+    mylib::ComputeShader comp_boid{"boid.glsl"};
+    mylib::Shader boid_shader{"boid_shader.vert", "boid_shader.frag"};
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -84,15 +94,16 @@ int main()
 
     while (!glfwWindowShouldClose(window)) {
         float time = (float)glfwGetTime();
-        dT = time - lastTime;
+        // If framerate is lower than 30 fps, clamp it to avoid stutters
+        dT = std::min(time - lastTime, 0.033f);
         lastTime = time;
-        std::cout << 1/dT << " " << num_of_boids << std::endl;
+        //std::cout << 1/dT << " " << num_of_boids << std::endl;
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO[readIdx]);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO[writeIdx]);
 
-        glUseProgram(comp.ID());
-        glUniform1f(glGetUniformLocation(comp.ID(), "time"), time);
+        glUseProgram(comp_boid.ID());
+        glUniform1f(glGetUniformLocation(comp_boid.ID(), "dT"), dT);
         glDispatchCompute((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
@@ -101,15 +112,15 @@ int main()
         glClearColor(0.8, 0.5, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shader.ID());
+        glUseProgram(boid_shader.ID());
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)800/600, 0.1f, 1000.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)800/600, 0.1f, 100.0f);
 
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(shader.ID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
@@ -128,6 +139,20 @@ int main()
     glfwTerminate();
 }
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
     glViewport(0, 0, width, height);
+}
+
+int randomNumberWithin(int min, int max)
+{
+    if (max <= min)
+    {
+        std::cerr << "min need to be smaller than max" << std::endl;
+        return 0;
+    }
+
+    int range = max - min + 1;
+    int rnd = rand() % range;
+    return min + rnd;
 }

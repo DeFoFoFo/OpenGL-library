@@ -4,9 +4,11 @@
 
 struct Boid
 {
-    glm::vec4 pos_speed;
+    // radius of neighbours is the w component and position the xyz component
+    glm::vec4 pos_radius;
+    glm::vec4 velocity_neighbourCount;
 
-    Boid(glm::vec4 pos_speed = glm::vec4(0.0f))
-        : pos_speed{pos_speed}
+    Boid(glm::vec4 pos_radius, glm::vec4 velocity_neighbourCount)
+        : pos_radius{pos_radius}, velocity_neighbourCount{velocity_neighbourCount}
     {}
 };
