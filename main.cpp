@@ -13,21 +13,32 @@
 #include <vector>
 #include <cstdlib>
 
+constexpr uint32_t WIN_WIDTH = 1600;
+constexpr uint32_t WIN_HEIGHT = 1200;
+
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+void mouseCallback(GLFWwindow* window, double xPos, double yPos);
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
+void processInput(GLFWwindow* window);
+
 int randomNumberWithin(int min, int max);
 
 mylib::Camera camera{glm::vec3(0.0f, 0.0f, 25.0f)};
+float lastX = WIN_WIDTH / 2;
+float lastY = WIN_HEIGHT / 2;
+bool firstMouse = true;
+
+float dT{};
+float lastTime{};
 
 int main()
 {
-    const int width = 800;
-    const int height = 600;
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(width, height, "Test", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "Test", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create window" << std::endl;
         return -1;
@@ -39,10 +50,15 @@ int main()
         return -1;
     }
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     glfwSwapInterval(1);
 
-    const float radius_of_neighbours = 4;
-    uint32_t num_of_boids{20000};
+    const float radius_of_neighbours = 0.5f;
+    uint32_t num_of_boids{100000};
     std::vector<Boid> boids;
     boids.reserve(num_of_boids);
     for (size_t i{}; i < num_of_boids; ++i)
@@ -89,15 +105,14 @@ int main()
 
     glEnable(GL_PROGRAM_POINT_SIZE);
 
-    float dT{};
-    float lastTime{};
-
     while (!glfwWindowShouldClose(window)) {
         float time = (float)glfwGetTime();
         // If framerate is lower than 30 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.033f);
         lastTime = time;
-        //std::cout << 1/dT << " " << num_of_boids << std::endl;
+        std::cout << 1/dT << " " << num_of_boids << std::endl;
+
+        processInput(window);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO[readIdx]);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO[writeIdx]);
@@ -116,7 +131,7 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)800/600, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 100.0f);
 
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -142,6 +157,67 @@ int main()
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
+}
+
+void mouseCallback(GLFWwindow* window, double xPosIn, double yPosIn)
+{
+	float xPos = static_cast<float>(xPosIn);
+	float yPos = static_cast<float>(yPosIn);
+
+	if (firstMouse)
+    {
+		lastX = xPos;
+		lastY = yPos;
+		firstMouse = false;
+	}
+
+	float xOffset = xPos - lastX;
+	float yOffset = lastY - yPos; // y coordinates are reversed
+
+	lastX = xPos;
+	lastY = yPos;
+
+	camera.processMouse(xOffset, yOffset);
+}
+
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+{
+	camera.processScroll(yOffset);
+}
+
+void processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    {
+		glfwSetWindowShouldClose(window, true);
+	}
+
+    using namespace mylib;
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+		camera.processKeyboard(CameraMovement::FORWARD, dT);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+		camera.processKeyboard(CameraMovement::BACKWARDS, dT);
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+		camera.processKeyboard(CameraMovement::LEFT, dT);
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+		camera.processKeyboard(CameraMovement::RIGHT, dT);
+	}
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+		camera.processKeyboard(CameraMovement::UP, dT);
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+		camera.processKeyboard(CameraMovement::DOWN, dT);
+	}
 }
 
 int randomNumberWithin(int min, int max)

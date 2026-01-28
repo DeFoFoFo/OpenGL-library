@@ -35,8 +35,8 @@ void main() {
     vec3 alignment_force = vec3(0.0f);
     vec3 separation_force = vec3(0.0f);
 
-    float cohesion_weight = 0.01f;
-    float alignment_weight = 0.05f;
+    float cohesion_weight = 0.1f;
+    float alignment_weight = 0.1f;
     float separation_weight = 0.1f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
@@ -65,13 +65,12 @@ void main() {
         separation_force /= neighbour_count;
     }
     cohesion_force -= pos;
-    separation_force;
 
-    velocity = velocity
-             + cohesion_force * cohesion_weight
-             + alignment_force * alignment_weight
-             + separation_force * separation_weight;
-    velocity = clamp(velocity, vec3(-10.0), vec3(10.0));
+    velocity += (cohesion_force * cohesion_weight 
+                 + alignment_force * alignment_weight
+                 + separation_force * separation_weight
+    );
+    velocity = clamp(velocity, vec3(-3.0), vec3(3.0));
 
     pos += velocity * dT;
     // Clamp it inside the box -10, 10
