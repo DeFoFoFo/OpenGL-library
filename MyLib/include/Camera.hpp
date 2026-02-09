@@ -67,8 +67,8 @@ private:
     float m_zoom;
     float m_speed;
     float m_yaw, m_pitch;
-    bool m_allow_movement;
-    bool m_allow_looking;
+    bool m_allowMovement;
+    bool m_allowLooking;
 
     void updateCameraVectors();
 };
