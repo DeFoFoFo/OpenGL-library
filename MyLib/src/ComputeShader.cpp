@@ -52,7 +52,7 @@ void mylib::ComputeShader::assign(const char* filePath)
 }
 
 // Returns the program ID
-GLuint mylib::ComputeShader::ID()
+GLuint mylib::ComputeShader::getID()
 {
     return m_ID;
 }

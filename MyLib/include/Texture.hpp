@@ -2,7 +2,7 @@
 
 #include "glad/gl.h"
 
-#include <cstdint.h>
+#include <cstdint>
 
 namespace mylib
 {

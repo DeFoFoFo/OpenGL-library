@@ -33,7 +33,6 @@ float lastTime{};
 
 int main()
 {
-
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -57,8 +56,8 @@ int main()
 
     glfwSwapInterval(1);
 
-    const float radius_of_neighbours = 0.5f;
-    uint32_t num_of_boids{100000};
+    const float radius_of_neighbours = 1.0f;
+    uint32_t num_of_boids{5000};
     std::vector<Boid> boids;
     boids.reserve(num_of_boids);
     for (size_t i{}; i < num_of_boids; ++i)
@@ -96,6 +95,11 @@ int main()
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
 
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)(sizeof(glm::vec4)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
     glBindVertexArray(0);
 
     const GLuint LOCAL_SIZE = 256;
@@ -110,15 +114,15 @@ int main()
         // If framerate is lower than 30 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.033f);
         lastTime = time;
-        std::cout << 1/dT << " " << num_of_boids << std::endl;
+        //std::cout << 1/dT << " " << num_of_boids << std::endl;
 
         processInput(window);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO[readIdx]);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO[writeIdx]);
 
-        glUseProgram(comp_boid.ID());
-        glUniform1f(glGetUniformLocation(comp_boid.ID(), "dT"), dT);
+        glUseProgram(comp_boid.getID());
+        glUniform1f(glGetUniformLocation(comp_boid.getID(), "dT"), dT);
         glDispatchCompute((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
@@ -127,20 +131,21 @@ int main()
         glClearColor(0.8, 0.5, 0.3, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(boid_shader.ID());
+        glUseProgram(boid_shader.getID());
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 100.0f);
 
-        glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(boid_shader.ID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+        glUniform3fv(glGetUniformLocation(boid_shader.getID(), "viewPos"), 1, glm::value_ptr(camera.getPos()));
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)0);
-        glEnableVertexAttribArray(0);
+        
         glDrawArrays(GL_POINTS, 0, num_of_boids);
 
         glfwSwapBuffers(window);

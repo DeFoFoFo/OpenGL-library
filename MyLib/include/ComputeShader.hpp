@@ -15,7 +15,7 @@ public:
     ~ComputeShader();
 
     void assign(const char* filePath);
-    GLuint ID();
+    GLuint getID();
 private:
     GLuint m_ID;
 

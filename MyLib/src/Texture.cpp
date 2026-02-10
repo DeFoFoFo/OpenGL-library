@@ -30,7 +30,7 @@ void mylib::Texture::loadTexture(const char *filePath)
     stbi_set_flip_vertically_on_load(true);
     
     int width, height, nrChannels;
-    GL_UNSIGNED_BYTE* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
 
     if (data)
     {
@@ -79,7 +79,7 @@ void mylib::Texture::loadTexture(const char *filePath)
 
 void mylib::Texture::bind(uint16_t slot)
 {
-    glActiveTexture(GL_TEXTURE0 + slot)
+    glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, m_ID);
 }
 

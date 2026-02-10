@@ -56,7 +56,7 @@ void mylib::Shader::assign(const char* vsFilePath, const char* fsFilePath)
 }
 
 // Returns the program ID
-GLuint mylib::Shader::ID()
+GLuint mylib::Shader::getID()
 {
     return m_ID;
 }

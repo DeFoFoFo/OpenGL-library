@@ -15,7 +15,7 @@ public:
     ~Shader();
 
     void assign(const char* vsFilePath, const char* fsFilePath);
-    GLuint ID();
+    GLuint getID();
 private:
     GLuint m_ID;
     
