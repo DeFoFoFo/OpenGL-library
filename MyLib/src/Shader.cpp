@@ -55,8 +55,13 @@ void mylib::Shader::assign(const char* vsFilePath, const char* fsFilePath)
     checkLinkStatus(vsFilePath, fsFilePath);
 }
 
+void mylib::Shader::bind() const
+{
+    glUseProgram(m_ID);
+}
+
 // Returns the program ID
-GLuint mylib::Shader::getID()
+GLuint mylib::Shader::getID() const
 {
     return m_ID;
 }

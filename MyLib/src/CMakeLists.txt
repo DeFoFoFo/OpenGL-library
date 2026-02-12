@@ -6,6 +6,10 @@ target_sources(mylib PRIVATE
     ComputeShader.cpp
     Camera.cpp
     Texture.cpp
+    VertexBuffer.cpp
+    IndexBuffer.cpp
+    VertexArray.cpp
+    Renderer.cpp
 )
 
 target_include_directories(mylib PUBLIC

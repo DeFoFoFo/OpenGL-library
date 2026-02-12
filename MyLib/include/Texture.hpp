@@ -22,4 +22,4 @@ private:
     GLuint m_ID;
 };
 
-}
+} // namespace mylib

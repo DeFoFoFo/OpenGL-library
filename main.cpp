@@ -8,6 +8,10 @@
 #include "Shader.hpp"
 #include "Camera.hpp"
 #include "Boid.hpp"
+#include "Texture.hpp"
+#include "VertexArray.hpp"
+#include "IndexBuffer.hpp"
+#include "Renderer.hpp"
 
 #include <iostream>
 #include <vector>
@@ -38,13 +42,15 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "Test", NULL, NULL);
-    if (!window) {
+    if (!window)
+    {
         std::cerr << "Failed to create window" << std::endl;
         return -1;
     }
     glfwMakeContextCurrent(window);
 
-    if (!gladLoadGL(glfwGetProcAddress)) {
+    if (!gladLoadGL(glfwGetProcAddress))
+    {
         std::cerr << "Failed to initialize glad" << std::endl;
         return -1;
     }
@@ -108,8 +114,10 @@ int main()
     mylib::Shader boid_shader{"boid_shader.vert", "boid_shader.frag"};
 
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_DEPTH_TEST);
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window))
+    {
         float time = (float)glfwGetTime();
         // If framerate is lower than 30 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.033f);
@@ -129,7 +137,7 @@ int main()
         std::swap(readIdx, writeIdx);
 
         glClearColor(0.8, 0.5, 0.3, 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(boid_shader.getID());
 

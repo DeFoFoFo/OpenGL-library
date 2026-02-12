@@ -73,4 +73,4 @@ private:
     void updateCameraVectors();
 };
 
-}
+} // namespace mylib

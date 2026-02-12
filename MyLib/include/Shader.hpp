@@ -15,7 +15,8 @@ public:
     ~Shader();
 
     void assign(const char* vsFilePath, const char* fsFilePath);
-    GLuint getID();
+    void bind() const;
+    GLuint getID() const;
 private:
     GLuint m_ID;
     
@@ -24,4 +25,4 @@ private:
     void checkLinkStatus(const char* vsFilePath, const char* fsFilePath);
 };
 
-}
+} // namespace mylib

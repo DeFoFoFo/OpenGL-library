@@ -34,27 +34,27 @@ void mylib::Texture::loadTexture(const char *filePath)
 
     if (data)
     {
-        GLenum format{GL_RGBA8};
+        GLenum format{GL_RGBA};
         switch (nrChannels)
         {
             case 1:
             {
-                format = GL_R8;
+                format = GL_RED;
                 break;
             }
             case 2:
             {
-                format = GL_RG8;
+                format = GL_RG;
                 break;
             }
             case 3:
             {
-                format = GL_RGB8;
+                format = GL_RGB;
                 break;
             }
             case 4:
             {
-                format = GL_RGBA8;
+                format = GL_RGBA;
                 break;
             }
             default:
@@ -68,7 +68,7 @@ void mylib::Texture::loadTexture(const char *filePath)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else

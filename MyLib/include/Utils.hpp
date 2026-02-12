@@ -32,4 +32,4 @@ constexpr glm::vec4 color(mylib::Color c)
     return colorLUT[static_cast<size_t>(c)];
 }
 
-}
+} // namespace mylib

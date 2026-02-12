@@ -24,4 +24,4 @@ private:
     void checkLinkStatus(const char* filePath);
 };
 
-}
+} // namespace mylib
