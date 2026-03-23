@@ -1,12 +1,7 @@
-add_library(stbi STATIC)
+add_library(stb INTERFACE)
 
-target_sources(stbi
-    PRIVATE
-        src/stb_image.cpp
-)
-
-target_include_directories(stbi
-    PUBLIC
+target_include_directories(stb
+    INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )

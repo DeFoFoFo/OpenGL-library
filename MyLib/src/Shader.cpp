@@ -8,12 +8,10 @@
 #include <sstream>
 
 mylib::Shader::Shader()
-    : m_ID{0}
 {}
 
 // Expects a file path to the vertex shader and then the fragment shader
 mylib::Shader::Shader(const char* vsFilePath, const char* fsFilePath)
-    : m_ID{0}
 {
     assign(vsFilePath, fsFilePath);
 }
@@ -55,8 +53,13 @@ void mylib::Shader::assign(const char* vsFilePath, const char* fsFilePath)
     checkLinkStatus(vsFilePath, fsFilePath);
 }
 
+void mylib::Shader::bind() const
+{
+    glUseProgram(m_ID);
+}
+
 // Returns the program ID
-GLuint mylib::Shader::ID()
+GLuint mylib::Shader::getID() const
 {
     return m_ID;
 }

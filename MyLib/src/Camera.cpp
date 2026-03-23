@@ -12,8 +12,8 @@ mylib::Camera::Camera(glm::vec3 pos, glm::vec3 up, float sensitivity, float zoom
     m_speed = speed;
     m_yaw = yaw;
     m_pitch = pitch;
-    m_allow_movement = true;
-    m_allow_looking = true;
+    m_allowMovement = true;
+    m_allowLooking = true;
     updateCameraVectors();
 }
 
@@ -31,7 +31,7 @@ void mylib::Camera::updateCameraVectors()
 
 void mylib::Camera::processKeyboard(mylib::CameraMovement direction, float deltaTime)
 {
-    if (!m_allow_movement)
+    if (!m_allowMovement)
         return;
 
     using namespace mylib;
@@ -55,7 +55,7 @@ void mylib::Camera::processKeyboard(mylib::CameraMovement direction, float delta
 // constrainPitch makes it so the camera can't break its neck
 void mylib::Camera::processMouse(double xOffset, double yOffset, bool constrainPitch)
 {
-    if (!m_allow_looking)
+    if (!m_allowLooking)
         return;
     
     xOffset *= m_sensitivity;
@@ -77,7 +77,7 @@ void mylib::Camera::processMouse(double xOffset, double yOffset, bool constrainP
 
 void mylib::Camera::processScroll(double yOffset)
 {
-    if (!m_allow_looking)
+    if (!m_allowLooking)
         return;
 
     m_zoom -= (float)yOffset;
@@ -137,12 +137,12 @@ float mylib::Camera::getPitch()
 
 bool mylib::Camera::isAllowedMoving()
 {
-    return m_allow_movement;
+    return m_allowMovement;
 }
 
 bool mylib::Camera::isAllowedLooking()
 {
-    return m_allow_looking;
+    return m_allowLooking;
 }
 
 void mylib::Camera::setPos(glm::vec3 pos)
@@ -186,11 +186,11 @@ void mylib::Camera::setPitch(float pitch)
 // If set to false, the camera can not move
 void mylib::Camera::allowMovement(bool state)
 {
-    m_allow_movement = state;
+    m_allowMovement = state;
 }
 
 // If set to false, the camera can not look around or zoom
 void mylib::Camera::allowLooking(bool state)
 {
-    m_allow_looking = state;
+    m_allowLooking = state;
 }
