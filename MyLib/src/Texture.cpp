@@ -5,17 +5,13 @@
 #include <iostream>
 
 mylib::Texture::Texture()
-    : m_ID{0}
 {
     glGenTextures(1, &m_ID);
-    bind();
 }
 
 mylib::Texture::Texture(const char *filePath)
-    : m_ID{0}
 {
     glGenTextures(1, &m_ID);
-    bind();
     loadTexture(filePath);
 }
 
@@ -27,6 +23,8 @@ mylib::Texture::~Texture()
 
 void mylib::Texture::loadTexture(const char *filePath)
 {
+    bind();
+
     stbi_set_flip_vertically_on_load(true);
     
     int width, height, nrChannels;
@@ -63,11 +61,6 @@ void mylib::Texture::loadTexture(const char *filePath)
             }
         }
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
@@ -77,13 +70,44 @@ void mylib::Texture::loadTexture(const char *filePath)
     stbi_image_free(data);
 }
 
-void mylib::Texture::bind(uint16_t slot)
+void mylib::Texture::bind(uint16_t slot) const
 {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, m_ID);
 }
 
-void mylib::Texture::unbind()
+void mylib::Texture::unbind() const
 {
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+mylib::Sampler::Sampler()
+{
+    glGenSamplers(1, &m_ID);
+}
+
+mylib::Sampler::~Sampler()
+{
+    if (m_ID)
+        glDeleteSamplers(1, &m_ID);
+}
+
+void mylib::Sampler::addWrapParameter(GLenum wrapDimension, WrapParam parameter)
+{
+    glSamplerParameteri(GL_TEXTURE_2D, wrapDimension, static_cast<GLuint>(parameter));
+}
+
+void mylib::Sampler::addMagParameter(GLenum filter, MinMagFilterParam parameter)
+{
+    glSamplerParameteri(GL_TEXTURE_2D, filter, static_cast<GLuint>(parameter));
+}
+
+void mylib::Sampler::bind(uint16_t slot) const
+{
+    glBindSampler(GL_TEXTURE0 + slot, m_ID);
+}
+
+void mylib::Sampler::unbind(uint16_t slot) const
+{
+    glBindSampler(GL_TEXTURE0 + slot, 0);
 }

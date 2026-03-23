@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Defines.hpp"
+#if MIN_OPENGL_VERSION(4,3)
+
 #include "glad/gl.h"
 
 #include <string>
@@ -15,6 +18,8 @@ public:
     ~ComputeShader();
 
     void assign(const char* filePath);
+    void bind() const;
+    void dispatch(uint32_t x, uint32_t y, uint32_t z) const;
     GLuint getID();
 private:
     GLuint m_ID;
@@ -25,3 +30,5 @@ private:
 };
 
 } // namespace mylib
+
+#endif

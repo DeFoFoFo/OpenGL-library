@@ -10,6 +10,7 @@ target_sources(mylib PRIVATE
     IndexBuffer.cpp
     VertexArray.cpp
     Renderer.cpp
+    ShaderStorageBuffer.cpp
 )
 
 target_include_directories(mylib PUBLIC

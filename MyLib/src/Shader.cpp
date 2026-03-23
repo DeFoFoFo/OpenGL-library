@@ -8,12 +8,10 @@
 #include <sstream>
 
 mylib::Shader::Shader()
-    : m_ID{0}
 {}
 
 // Expects a file path to the vertex shader and then the fragment shader
 mylib::Shader::Shader(const char* vsFilePath, const char* fsFilePath)
-    : m_ID{0}
 {
     assign(vsFilePath, fsFilePath);
 }

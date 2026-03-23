@@ -11,11 +11,11 @@ namespace mylib
 
 struct VertexBufferElement
 {
-    uint32_t type;
+    GLuint type;
     uint32_t count;
     GLuint normalized;
 
-    static uint32_t getSizeOfType(uint32_t type)
+    static uint32_t getSizeOfType(GLuint type)
     {
         switch (type)
         {
@@ -54,7 +54,7 @@ public:
             m_stride += count * VertexBufferElement::getSizeOfType(GL_UNSIGNED_BYTE);
             break;
         default:
-            std::cerr << "MYLIB::ERROR::VERTEXBUFFERLAYOUT::UNSUPPORTED_TYPE" << std::endl;
+            std::cerr << "MYLIB::ERROR::VERTEXBUFFERLAYOUT::PUSH::UNSUPPORTED_TYPE" << std::endl;
         }
     }
 

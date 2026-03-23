@@ -1,16 +1,17 @@
 #include "ComputeShader.hpp"
 
+#include "Defines.hpp"
+#if MIN_OPENGL_VERSION(4,3)
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 mylib::ComputeShader::ComputeShader()
-    : m_ID{0}
 {}
 
 // Expects a filepath to the compute shader
 mylib::ComputeShader::ComputeShader(const char* filePath)
-    : m_ID{0}
 {
     assign(filePath);
 }
@@ -26,12 +27,9 @@ mylib::ComputeShader::~ComputeShader()
 // Expects a filepath to the compute shader
 void mylib::ComputeShader::assign(const char* filePath)
 {
-    GLint versionMajor = 0, versionMinor = 0;
-    glGetIntegerv(GL_MAJOR_VERSION, &versionMajor);
-    glGetIntegerv(GL_MINOR_VERSION, &versionMinor);
-    if ((versionMajor < 4) || (versionMajor >= 4 && versionMinor < 3))
+    if (!MIN_OPENGL_VERSION(4,3))
     {
-        std::cerr << "MYLIB::ERROR::COMPUTE_SHADER::OPENGL_VERSION_LESS_THAN_4.3\tCURRENT: " << versionMajor << "." << versionMinor << std::endl;
+        std::cerr << "MYLIB::ERROR::COMPUTE_SHADER::ASSIGN::OPENGL_VERSION_LESS_THAN_4.3\tCURRENT: " << OPENGL_VERSION_MAJOR << "." << OPENGL_VERSION_MINOR << std::endl;
     }
 
     std::string code{readFile(filePath)};
@@ -49,6 +47,17 @@ void mylib::ComputeShader::assign(const char* filePath)
     glDeleteShader(compute);
 
     checkLinkStatus(filePath);
+}
+
+void mylib::ComputeShader::bind() const
+{
+    glUseProgram(m_ID);
+}
+
+// Specifies the sizes of the work groups in the x, y and z axes
+void mylib::ComputeShader::dispatch(uint32_t x, uint32_t y, uint32_t z) const
+{
+    glDispatchCompute(x, y, z);
 }
 
 // Returns the program ID
@@ -100,3 +109,5 @@ void mylib::ComputeShader::checkLinkStatus(const char* filePath)
         std::cerr << "MYLIB::ERROR::COMPUTE_SHADER::LINKING_FAILED\tPATH: \"" << filePath << "\"\n" << infoLog << std::endl;
     }
 }
+
+#endif

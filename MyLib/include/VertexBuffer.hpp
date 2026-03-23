@@ -15,8 +15,11 @@ public:
 
     void bind() const;
     void unbind() const;
+
+    void update(const void* data, uint32_t offset, uint32_t size);
 private:
     GLuint m_ID;
+    uint32_t m_size;
 };
 
 } // namespace mylib
