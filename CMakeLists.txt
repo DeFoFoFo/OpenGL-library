@@ -5,17 +5,4 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(MyLib)
 
-add_executable(mytest)
-
-target_sources(mytest PRIVATE
-    Main.cpp
-    Boid.cpp
-)
-
-target_link_libraries(mytest PRIVATE
-    mylib
-)
-
-target_compile_features(mytest PUBLIC
-    cxx_std_20
-)
+add_subdirectory(src)

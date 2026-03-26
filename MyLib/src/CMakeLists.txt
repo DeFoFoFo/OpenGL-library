@@ -6,11 +6,9 @@ target_sources(mylib PRIVATE
     ComputeShader.cpp
     Camera.cpp
     Texture.cpp
-    VertexBuffer.cpp
-    IndexBuffer.cpp
     VertexArray.cpp
     Renderer.cpp
-    ShaderStorageBuffer.cpp
+    Buffer.cpp
 )
 
 target_include_directories(mylib PUBLIC
@@ -25,6 +23,7 @@ target_link_libraries(mylib
     PUBLIC glfw
     PUBLIC stb
     PUBLIC glm
+    PRIVATE assimp
 )
 
 target_compile_features(mylib PUBLIC

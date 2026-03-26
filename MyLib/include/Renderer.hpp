@@ -3,7 +3,7 @@
 #include "glad/gl.h"
 
 #include "VertexArray.hpp"
-#include "IndexBuffer.hpp"
+#include "Buffer.hpp"
 #include "Shader.hpp"
 
 #include <cstdint>
@@ -11,7 +11,7 @@
 namespace mylib
 {
 
-enum class Primitive : GLuint
+enum class Primitive : GLenum
 {
     POINTS = GL_POINTS,                   // Each vertex is a single point
     LINES = GL_LINES,                     // Each pair of vertices is a single line
@@ -25,9 +25,11 @@ enum class Primitive : GLuint
 class Renderer
 {
 public:
-    void draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
+    void draw(const VertexArray& va, const Buffer& ib, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
     void showLines(bool state);
     void clear() const;
+private:
+    constexpr GLenum toGL(Primitive primitive) const;
 };
 
 } // namespace mylib

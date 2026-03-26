@@ -9,6 +9,13 @@
 namespace mylib
 {
 
+enum class TextureType : GLuint
+{
+    TEXT1D                     = GL_TEXTURE_1D,
+    TEXT2D                     = GL_TEXTURE_2D,
+//    TEXT3D                     = GL_TEXTURE_3D // Currently not supported
+};
+
 enum class WrapParam : GLuint
 {
     CLAMP_TO_BORDER        = GL_CLAMP_TO_BORDER,         // Clamps the texture to the border (if specified)
@@ -32,7 +39,7 @@ enum class MinMagFilterParam : GLuint
 class Sampler
 {
 public:
-    Sampler();
+    Sampler(TextureType type);
     ~Sampler();
 
     void addWrapParameter(GLenum wrapDimension, WrapParam parameter);
@@ -42,13 +49,14 @@ public:
     void unbind(uint16_t slot = 0) const;
 private:
     GLuint m_ID;
+    GLenum m_type;
 };
 
 class Texture
 {
 public:
-    Texture();
-    Texture(const char* filePath);
+    Texture(TextureType type);
+    Texture(TextureType type, const char* filePath);
     ~Texture();
 
     void loadTexture(const char* filePath);
@@ -57,6 +65,7 @@ public:
     void unbind() const;
 private:
     GLuint m_ID;
+    GLenum m_type;
 };
 
 } // namespace mylib

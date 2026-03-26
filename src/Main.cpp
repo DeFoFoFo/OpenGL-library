@@ -11,7 +11,6 @@
 #include "Boid.hpp"
 #include "Texture.hpp"
 #include "VertexArray.hpp"
-#include "IndexBuffer.hpp"
 #include "Renderer.hpp"
 
 #include <iostream>
@@ -63,8 +62,8 @@ int main()
 
     glfwSwapInterval(0);
 
-    const float radius_of_neighbours = 1.0f;
-    uint32_t num_of_boids{10000};
+    const float radius_of_neighbours = 2.0f;
+    uint32_t num_of_boids{1000};
     std::vector<Boid> boids;
     boids.reserve(num_of_boids);
     for (size_t i{}; i < num_of_boids; ++i)
@@ -83,31 +82,22 @@ int main()
         );
     }
 
-    GLuint SSBO[2];
-    glGenBuffers(2, SSBO);
+    mylib::Buffer SSBO[2];
     for (int i{}; i < 2; ++i)
     {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO[i]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER,
-                    num_of_boids * sizeof(Boid),
-                    boids.data(),
-                    GL_DYNAMIC_DRAW);
+        SSBO[i].bindAs(mylib::BufferTarget::SSBO);
+        SSBO[i].fill(mylib::BufferTarget::SSBO, num_of_boids * sizeof(Boid), boids.data(), GL_STREAM_DRAW);
     }
     
     int readIdx = 0;
     int writeIdx = 1;
 
-    GLuint VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
+    mylib::VertexBufferLayout boidLayout;
+    boidLayout.push(4, GL_FLOAT);
+    boidLayout.push(4, GL_FLOAT);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Boid), (void*)(sizeof(glm::vec4)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
+    mylib::VertexArray boidVAO;
+    boidVAO.addBuffer(SSBO[readIdx], boidLayout);
 
     const GLuint LOCAL_SIZE = 256;
 
@@ -133,22 +123,19 @@ int main()
         20,21,22,  22,23,20     // v4-v7-v6, v6-v5-v4 (back)
     };
 
-    GLuint cubeVAO;
-    glGenVertexArrays(1, &cubeVAO);
-    glBindVertexArray(cubeVAO);
+    mylib::Buffer cubeVBO;
+    cubeVBO.bindAs(mylib::BufferTarget::VBO);
+    cubeVBO.fill(mylib::BufferTarget::VBO, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    GLuint cubeVBO;
-    glGenBuffers(1, &cubeVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    mylib::Buffer cubeEBO;
+    cubeEBO.bindAs(mylib::BufferTarget::EBO);
+    cubeEBO.fill(mylib::BufferTarget::EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    GLuint cubeEBO;
-    glGenBuffers(1, &cubeEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    mylib::VertexBufferLayout cubeLayout;
+    cubeLayout.push(3, GL_FLOAT);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (const void*)0);
+    mylib::VertexArray cubeVAO;
+    cubeVAO.addBuffer(cubeVBO, cubeLayout);
 
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
     cube_shader.bind();
@@ -169,12 +156,12 @@ int main()
 
         processInput(window);
 
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, SSBO[readIdx]);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO[writeIdx]);
+        SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
+        SSBO[writeIdx].bindBase(mylib::BufferTarget::SSBO, 1);
 
-        glUseProgram(comp_boid.getID());
+        comp_boid.bind();
         glUniform1f(glGetUniformLocation(comp_boid.getID(), "dT"), dT);
-        glDispatchCompute((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
+        comp_boid.dispatch((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
         std::swap(readIdx, writeIdx);
@@ -186,17 +173,17 @@ int main()
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 100.0f);
 
-        glUseProgram(boid_shader.getID());
-
+        boid_shader.bind();
+        
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         glUniform3fv(glGetUniformLocation(boid_shader.getID(), "viewPos"), 1, glm::value_ptr(camera.getPos()));
 
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, SSBO[readIdx]);
-        
+        boidVAO.bind();
+        SSBO[readIdx].bindAs(mylib::BufferTarget::VBO);
+                
         glDrawArrays(GL_POINTS, 0, num_of_boids);
         
         model = glm::mat4(1.0f);
@@ -208,17 +195,14 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(cube_shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(cube_shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        glBindVertexArray(cubeVAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
+        cubeVAO.bind();
+        cubeEBO.bindAs(mylib::BufferTarget::EBO);
 
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glDeleteBuffers(2, SSBO);
-    glDeleteVertexArrays(1, &VAO);
 
     glfwDestroyWindow(window);
     glfwTerminate();
