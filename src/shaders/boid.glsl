@@ -1,6 +1,8 @@
 #version 430
 layout(local_size_x = 256) in;
 
+#define BOX_SIZE 20
+
 struct Boid
 {
     vec4 position_radius;
@@ -34,10 +36,12 @@ void main() {
     vec3 cohesion_force = vec3(0.0f);
     vec3 alignment_force = vec3(0.0f);
     vec3 separation_force = vec3(0.0f);
+    vec3 avoidance_force = vec3(0.0f);
 
     float cohesion_weight = 1.0f;
-    float alignment_weight = 1.0f;
-    float separation_weight = 1.0f;
+    float alignment_weight = 5.0f;
+    float separation_weight = 2.0f;
+    float avoidance_weight = 1.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
     {
@@ -57,9 +61,10 @@ void main() {
         
         cohesion_force += other_boid.position_radius.xyz;
         alignment_force += other_boid.velocity_neighborCount.xyz;
-        separation_force += direction_to_other_boid * dist;
+        separation_force -= direction_to_other_boid * dist;
     }
-    if (neighbour_count != 0) {
+    if (neighbour_count != 0)
+    {
         cohesion_force /= neighbour_count;
         alignment_force /= neighbour_count;
         separation_force /= neighbour_count;
@@ -70,14 +75,15 @@ void main() {
         cohesion_force * cohesion_weight 
         + alignment_force * alignment_weight
         + separation_force * separation_weight
+        + avoidance_force * avoidance_weight
     );
 
     velocity += acceleration * dT;
     velocity = clamp(velocity, vec3(-2.0), vec3(2.0));
 
     pos += velocity * dT;
-    // Clamp it inside the box -10, 10
-    pos = mod(pos + 10, 20) - 10;
+    // Clamp it inside the box's dimensions
+    pos = mod(pos + BOX_SIZE/2, BOX_SIZE) - BOX_SIZE/2;
 
     outBoids[idx].position_radius = vec4(pos, radius_neighbours);
     outBoids[idx].velocity_neighborCount = vec4(velocity, neighbour_count);

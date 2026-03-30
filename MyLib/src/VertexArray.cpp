@@ -5,6 +5,7 @@
 mylib::VertexArray::VertexArray()
 {
     glGenVertexArrays(1, &m_ID);
+    bind();
 }
 
 mylib::VertexArray::~VertexArray()
@@ -13,10 +14,26 @@ mylib::VertexArray::~VertexArray()
         glDeleteVertexArrays(1, &m_ID);
 }
 
-void mylib::VertexArray::addBuffer(const VertexBuffer &vb, const VertexBufferLayout &layout)
+mylib::VertexArray::VertexArray(VertexArray &&other) noexcept
+    : m_ID{other.m_ID}
+{
+    other.m_ID = 0;
+}
+
+mylib::VertexArray &mylib::VertexArray::operator=(VertexArray &&other) noexcept
+{
+    if (this != &other) {
+        if (m_ID) glDeleteVertexArrays(1, &m_ID);
+        m_ID = other.m_ID;
+        other.m_ID = 0;
+    }
+    return *this;
+}
+
+void mylib::VertexArray::addBuffer(const Buffer &vb, const VertexBufferLayout &layout)
 {
     bind();
-    vb.bind();
+    vb.bindAs(mylib::BufferTarget::VBO);
     const auto& elements = layout.getElements();
     uint64_t offset{};
     for (size_t i{}; i < elements.size(); ++i)

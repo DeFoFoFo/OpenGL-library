@@ -1,0 +1,38 @@
+#include "Mesh.hpp"
+
+mylib::Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<mylib::Texture> &textures)
+    : vertices{std::move(vertices)}, indices{std::move(indices)}, textures{std::move(textures)}
+{
+    setupMesh();
+}
+
+const mylib::VertexArray& mylib::Mesh::getVAO() const
+{
+    return m_VAO;
+}
+
+const mylib::Buffer &mylib::Mesh::getVBO() const
+{
+    return m_VBO;
+}
+
+const mylib::Buffer &mylib::Mesh::getEBO() const
+{
+    return m_EBO;
+}
+
+void mylib::Mesh::setupMesh()
+{
+    m_VAO.bind();
+
+    mylib::VertexBufferLayout layout;
+    layout.push(3, GL_FLOAT);
+    layout.push(3, GL_FLOAT);
+    layout.push(2, GL_FLOAT);
+
+    m_VBO.fill(mylib::BufferTarget::VBO, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+    m_VAO.addBuffer(m_VBO, layout);
+    
+    m_EBO.fill(mylib::BufferTarget::EBO, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+    m_EBO.bindAs(mylib::BufferTarget::EBO);
+}

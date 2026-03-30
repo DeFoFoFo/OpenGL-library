@@ -9,10 +9,10 @@ mylib::Texture::Texture()
     glGenTextures(1, &m_ID);
 }
 
-mylib::Texture::Texture(const char *filePath)
+mylib::Texture::Texture(TextureDimension dimension, const char *filePath, bool flip)
 {
     glGenTextures(1, &m_ID);
-    loadTexture(filePath);
+    loadTexture(dimension, filePath, flip);
 }
 
 mylib::Texture::~Texture()
@@ -21,11 +21,13 @@ mylib::Texture::~Texture()
         glDeleteTextures(1, &m_ID);
 }
 
-void mylib::Texture::loadTexture(const char *filePath)
+void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePath, bool flip)
 {
+    m_dimension = static_cast<GLenum>(dimension);
+
     bind();
 
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(flip);
     
     int width, height, nrChannels;
     unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
@@ -61,8 +63,20 @@ void mylib::Texture::loadTexture(const char *filePath)
             }
         }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        switch (m_dimension)
+        {
+            case GL_TEXTURE_1D:
+            {
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, width, 0, format, GL_UNSIGNED_BYTE, data);
+                break;
+            }
+            case GL_TEXTURE_2D:
+            {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+                break;
+            }
+        }
+        glGenerateMipmap(m_dimension);
     }
     else
         std::cerr << "MYLIB::ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE\tPATH:" << filePath << std::endl;
@@ -73,15 +87,31 @@ void mylib::Texture::loadTexture(const char *filePath)
 void mylib::Texture::bind(uint16_t slot) const
 {
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, m_ID);
+    glBindTexture(m_dimension, m_ID);
 }
 
 void mylib::Texture::unbind() const
 {
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(m_dimension, 0);
 }
 
-mylib::Sampler::Sampler()
+GLuint mylib::Texture::ID() const
+{
+    return m_ID;
+}
+
+mylib::TextureType mylib::Texture::getTypeName() const
+{
+    return m_typeName;
+}
+
+void mylib::Texture::setTypeName(mylib::TextureType type)
+{
+    m_typeName = type;
+}
+
+mylib::Sampler::Sampler(TextureDimension dimension)
+    : m_dimension{static_cast<GLenum>(dimension)}
 {
     glGenSamplers(1, &m_ID);
 }
@@ -94,12 +124,12 @@ mylib::Sampler::~Sampler()
 
 void mylib::Sampler::addWrapParameter(GLenum wrapDimension, WrapParam parameter)
 {
-    glSamplerParameteri(GL_TEXTURE_2D, wrapDimension, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_dimension, wrapDimension, static_cast<GLuint>(parameter));
 }
 
 void mylib::Sampler::addMagParameter(GLenum filter, MinMagFilterParam parameter)
 {
-    glSamplerParameteri(GL_TEXTURE_2D, filter, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_dimension, filter, static_cast<GLuint>(parameter));
 }
 
 void mylib::Sampler::bind(uint16_t slot) const
