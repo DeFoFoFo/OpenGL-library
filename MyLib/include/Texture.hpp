@@ -11,8 +11,15 @@ namespace mylib
 
 enum class TextureType : GLuint
 {
-    TEXT1D                     = GL_TEXTURE_1D,
-    TEXT2D                     = GL_TEXTURE_2D,
+    NONE                     = 0,
+    DIFFUSE                  = 1, // Base color of the texture
+    SPECULAR                 = 2, // Reflection
+};
+
+enum class TextureDimension : GLuint
+{
+    DIM1                     = GL_TEXTURE_1D,
+    DIM2                     = GL_TEXTURE_2D,
 //    TEXT3D                     = GL_TEXTURE_3D // Currently not supported
 };
 
@@ -39,7 +46,7 @@ enum class MinMagFilterParam : GLuint
 class Sampler
 {
 public:
-    Sampler(TextureType type);
+    Sampler(TextureDimension dimension);
     ~Sampler();
 
     void addWrapParameter(GLenum wrapDimension, WrapParam parameter);
@@ -49,23 +56,28 @@ public:
     void unbind(uint16_t slot = 0) const;
 private:
     GLuint m_ID;
-    GLenum m_type;
+    GLenum m_dimension;
 };
 
 class Texture
 {
 public:
-    Texture(TextureType type);
-    Texture(TextureType type, const char* filePath);
+    Texture();
+    Texture(TextureDimension dimension, const char* filePath, bool flip = false);
     ~Texture();
 
-    void loadTexture(const char* filePath);
+    void loadTexture(TextureDimension dimension, const char* filePath, bool flip = false);
 
     void bind(uint16_t slot = 0) const;
     void unbind() const;
+
+    GLuint ID() const;
+    mylib::TextureType getTypeName() const;
+    void setTypeName(mylib::TextureType type);
 private:
     GLuint m_ID;
-    GLenum m_type;
+    GLenum m_dimension = GL_TEXTURE_2D;
+    TextureType m_typeName; // ex: diffuse, specular, emission
 };
 
 } // namespace mylib

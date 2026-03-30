@@ -9,6 +9,8 @@ target_sources(mylib PRIVATE
     VertexArray.cpp
     Renderer.cpp
     Buffer.cpp
+    Mesh.cpp
+    Model.cpp
 )
 
 target_include_directories(mylib PUBLIC
@@ -23,7 +25,7 @@ target_link_libraries(mylib
     PUBLIC glfw
     PUBLIC stb
     PUBLIC glm
-    PRIVATE assimp
+    PUBLIC assimp
 )
 
 target_compile_features(mylib PUBLIC

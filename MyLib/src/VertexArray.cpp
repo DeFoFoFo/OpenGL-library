@@ -5,12 +5,29 @@
 mylib::VertexArray::VertexArray()
 {
     glGenVertexArrays(1, &m_ID);
+    bind();
 }
 
 mylib::VertexArray::~VertexArray()
 {
     if (m_ID)
         glDeleteVertexArrays(1, &m_ID);
+}
+
+mylib::VertexArray::VertexArray(VertexArray &&other) noexcept
+    : m_ID{other.m_ID}
+{
+    other.m_ID = 0;
+}
+
+mylib::VertexArray &mylib::VertexArray::operator=(VertexArray &&other) noexcept
+{
+    if (this != &other) {
+        if (m_ID) glDeleteVertexArrays(1, &m_ID);
+        m_ID = other.m_ID;
+        other.m_ID = 0;
+    }
+    return *this;
 }
 
 void mylib::VertexArray::addBuffer(const Buffer &vb, const VertexBufferLayout &layout)

@@ -30,6 +30,11 @@ class Buffer
 public:
     Buffer();
     ~Buffer();
+    Buffer(Buffer&& other) noexcept;
+    Buffer& operator=(Buffer&& other) noexcept;
+    Buffer(const Buffer&) = delete;
+    Buffer& operator=(const Buffer&) = delete;
+
 
     void fill(const BufferTarget target, GLsizeiptr size, const void* data, GLenum usage);
     void update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void* data);

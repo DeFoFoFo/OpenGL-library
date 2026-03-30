@@ -4,17 +4,15 @@
 
 #include <iostream>
 
-mylib::Texture::Texture(TextureType type)
-    : m_type{static_cast<GLenum>(type)}
+mylib::Texture::Texture()
 {
     glGenTextures(1, &m_ID);
 }
 
-mylib::Texture::Texture(TextureType type, const char *filePath)
-    : m_type{static_cast<GLenum>(type)}
+mylib::Texture::Texture(TextureDimension dimension, const char *filePath, bool flip)
 {
     glGenTextures(1, &m_ID);
-    loadTexture(filePath);
+    loadTexture(dimension, filePath, flip);
 }
 
 mylib::Texture::~Texture()
@@ -23,11 +21,13 @@ mylib::Texture::~Texture()
         glDeleteTextures(1, &m_ID);
 }
 
-void mylib::Texture::loadTexture(const char *filePath)
+void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePath, bool flip)
 {
+    m_dimension = static_cast<GLenum>(dimension);
+
     bind();
 
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(flip);
     
     int width, height, nrChannels;
     unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
@@ -63,7 +63,7 @@ void mylib::Texture::loadTexture(const char *filePath)
             }
         }
 
-        switch (m_type)
+        switch (m_dimension)
         {
             case GL_TEXTURE_1D:
             {
@@ -76,7 +76,7 @@ void mylib::Texture::loadTexture(const char *filePath)
                 break;
             }
         }
-        glGenerateMipmap(m_type);
+        glGenerateMipmap(m_dimension);
     }
     else
         std::cerr << "MYLIB::ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE\tPATH:" << filePath << std::endl;
@@ -87,16 +87,31 @@ void mylib::Texture::loadTexture(const char *filePath)
 void mylib::Texture::bind(uint16_t slot) const
 {
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(m_type, m_ID);
+    glBindTexture(m_dimension, m_ID);
 }
 
 void mylib::Texture::unbind() const
 {
-    glBindTexture(m_type, 0);
+    glBindTexture(m_dimension, 0);
 }
 
-mylib::Sampler::Sampler(TextureType type)
-    : m_type{static_cast<GLenum>(type)}
+GLuint mylib::Texture::ID() const
+{
+    return m_ID;
+}
+
+mylib::TextureType mylib::Texture::getTypeName() const
+{
+    return m_typeName;
+}
+
+void mylib::Texture::setTypeName(mylib::TextureType type)
+{
+    m_typeName = type;
+}
+
+mylib::Sampler::Sampler(TextureDimension dimension)
+    : m_dimension{static_cast<GLenum>(dimension)}
 {
     glGenSamplers(1, &m_ID);
 }
@@ -109,12 +124,12 @@ mylib::Sampler::~Sampler()
 
 void mylib::Sampler::addWrapParameter(GLenum wrapDimension, WrapParam parameter)
 {
-    glSamplerParameteri(m_type, wrapDimension, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_dimension, wrapDimension, static_cast<GLuint>(parameter));
 }
 
 void mylib::Sampler::addMagParameter(GLenum filter, MinMagFilterParam parameter)
 {
-    glSamplerParameteri(m_type, filter, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_dimension, filter, static_cast<GLuint>(parameter));
 }
 
 void mylib::Sampler::bind(uint16_t slot) const
