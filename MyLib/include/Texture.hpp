@@ -65,8 +65,14 @@ public:
     Texture();
     Texture(TextureDimension dimension, const char* filePath, bool flip = false);
     ~Texture();
+    Texture(Texture&& other) noexcept;
+    Texture& operator=(Texture&& other) noexcept;
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
 
     void loadTexture(TextureDimension dimension, const char* filePath, bool flip = false);
+    void loadTexture(TextureDimension dimension, unsigned char* data, size_t size);
+    void loadTexture(TextureDimension dimension, int width, int height, unsigned char* data, GLenum format);
 
     void bind(uint16_t slot = 0) const;
     void unbind() const;

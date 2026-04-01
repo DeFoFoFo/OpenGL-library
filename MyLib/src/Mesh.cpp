@@ -1,6 +1,6 @@
 #include "Mesh.hpp"
 
-mylib::Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<mylib::Texture> &textures)
+mylib::Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<mylib::Texture> textures)
     : vertices{std::move(vertices)}, indices{std::move(indices)}, textures{std::move(textures)}
 {
     setupMesh();

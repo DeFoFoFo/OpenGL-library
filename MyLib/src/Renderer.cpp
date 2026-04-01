@@ -35,12 +35,12 @@ void mylib::Renderer::draw(const mylib::Mesh &mesh, const Shader &shader, Primit
             }
             case mylib::TextureType::DIFFUSE:
             {
-                name = "text_diffuse" + std::to_string(diffuseNr++);
+                name = "tex_diffuse" + std::to_string(diffuseNr++);
                 break;
             }
             case mylib::TextureType::SPECULAR:
             {
-                name = "text_specular" + std::to_string(specularNr++);
+                name = "tex_specular" + std::to_string(specularNr++);
                 break;
             }
             default:

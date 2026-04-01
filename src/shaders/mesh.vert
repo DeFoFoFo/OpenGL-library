@@ -8,10 +8,22 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 
+uniform float time;
+
 out vec2 UV;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(vPos, 1.0f);
+    vec3 pos = vPos;
+
+    float amplitude = 0.1f;
+    float speed = 5.0f;
+    pos.y += amplitude * pow(abs(pos.x), 2) * cos(time * speed); // Beating wings
+
+    float a = 0.9f;
+    float b = 0.2f;
+    pos.y -= abs(cos(pos.z * a) * cos(time * speed / 2)) * b;
+    
+    gl_Position = projection * view * model * vec4(pos, 1.0f);
     UV = vTexCoords;
 }
