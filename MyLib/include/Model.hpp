@@ -18,13 +18,13 @@ public:
     const std::vector<mylib::Mesh>& getMeshes() const;
 private:
     std::vector<Mesh> m_meshes;
-    std::string m_directory;
+    std::string m_path;
 
     void loadModel(std::string path);
-    void processNode(aiNode* node, const aiScene* scene);
-    mylib::Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+    void processNode(const aiNode* node, const aiScene* scene);
+    mylib::Mesh processMesh(const aiMesh* mesh, const aiScene* scene);
 
-    std::vector<mylib::Texture> loadMaterialTextures(aiMaterial* material, aiTextureType type);
+    std::vector<mylib::Texture> loadMaterialTextures(const aiScene* scene, const aiMaterial* material, const aiTextureType type);
 };
 
 } // namespace mylib

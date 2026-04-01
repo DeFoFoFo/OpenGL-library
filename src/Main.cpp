@@ -20,6 +20,7 @@
 
 constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
+constexpr uint32_t BOX_SIZE = 100;
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
@@ -28,7 +29,7 @@ void processInput(GLFWwindow* window);
 
 int randomNumberWithin(int min, int max);
 
-mylib::Camera camera{glm::vec3(0.0f, 0.0f, 25.0f)};
+mylib::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
 float lastX = WIN_WIDTH / 2;
 float lastY = WIN_HEIGHT / 2;
 bool firstMouse = true;
@@ -82,9 +83,9 @@ int main()
     boids.reserve(num_of_boids);
     for (size_t i{}; i < num_of_boids; ++i)
     {
-        float xPos{(float)randomNumberWithin(-10, 10)};
-        float yPos{(float)randomNumberWithin(-10, 10)};
-        float zPos{(float)randomNumberWithin(-10, 10)};
+        float xPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
+        float yPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
+        float zPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
 
         float xVelocity{(float)randomNumberWithin(-2, 2)};
         float yVelocity{(float)randomNumberWithin(-2, 2)};
@@ -123,15 +124,15 @@ int main()
 
     mylib::Shader meshShader{"src/shaders/mesh.vert", "src/shaders/mesh.frag"};
 
-    mylib::Model dodeca{"assets/dodecahedron.glb"};
+    mylib::Model dodeca{"assets/Bird.glb"};
 
     GLfloat vertices[]  = {
-        .5f, .5f, .5f,  -.5f, .5f, .5f,  -.5f,-.5f, .5f,  .5f,-.5f, .5f, // v0,v1,v2,v3 (front)
-        .5f, .5f, .5f,   .5f,-.5f, .5f,   .5f,-.5f,-.5f,  .5f, .5f,-.5f, // v0,v3,v4,v5 (right)
-        .5f, .5f, .5f,   .5f, .5f,-.5f,  -.5f, .5f,-.5f, -.5f, .5f, .5f, // v0,v5,v6,v1 (top)
-        -.5f, .5f, .5f,  -.5f, .5f,-.5f, -.5f,-.5f,-.5f, -.5f,-.5f, .5f, // v1,v6,v7,v2 (left)
-        -.5f,-.5f,-.5f,   .5f,-.5f,-.5f,  .5f,-.5f, .5f, -.5f,-.5f, .5f, // v7,v4,v3,v2 (bottom)
-        .5f,-.5f,-.5f,  -.5f,-.5f,-.5f,  -.5f, .5f,-.5f,  .5f, .5f,-.5f  // v4,v7,v6,v5 (back)
+        1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,  1.0f,-1.0f, 1.0f, // v0,v1,v2,v3 (front)
+        1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f,  1.0f, 1.0f,-1.0f, // v0,v3,v4,v5 (right)
+        1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,  -1.0f, 1.0f,-1.0f, -1.0f, 1.0f, 1.0f, // v0,v5,v6,v1 (top)
+        -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f,-1.0f, -1.0f,-1.0f,-1.0f, -1.0f,-1.0f, 1.0f, // v1,v6,v7,v2 (left)
+        -1.0f,-1.0f,-1.0f,   1.0f,-1.0f,-1.0f,  1.0f,-1.0f, 1.0f, -1.0f,-1.0f, 1.0f, // v7,v4,v3,v2 (bottom)
+        1.0f,-1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,  1.0f, 1.0f,-1.0f  // v4,v7,v6,v5 (back)
     };
     GLuint indices[] = {
         0, 1, 2,   2, 3, 0,    // v0-v1-v2, v2-v3-v0 (front)
@@ -190,15 +191,13 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 100.0f);        
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);        
 
         boid_shader.bind();
         
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-        glUniform3fv(glGetUniformLocation(boid_shader.getID(), "viewPos"), 1, glm::value_ptr(camera.getPos()));
 
         boidVAO.bind();
         SSBO[readIdx].bindAs(mylib::BufferTarget::VBO);
@@ -211,10 +210,12 @@ int main()
         glUniformMatrix4fv(glGetUniformLocation(meshShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(meshShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
+        glUniform1f(glGetUniformLocation(meshShader.getID(), "time"), time);
+
         renderer.draw(dodeca, meshShader);
         
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(20.0f));
+        model = glm::scale(model, glm::vec3(50.0f));
 
         cube_shader.bind();
 

@@ -22,12 +22,12 @@ void mylib::Model::loadModel(std::string path)
         std::cerr << "MYLIB::ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
-    m_directory = path.substr(0, path.find_last_of('/'));
+    m_path = path;
 
     processNode(scene->mRootNode, scene);
 }
 
-void mylib::Model::processNode(aiNode *node, const aiScene *scene)
+void mylib::Model::processNode(const aiNode *node, const aiScene *scene)
 {
     // process all the node's meshes (if any)
     for(unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -42,7 +42,7 @@ void mylib::Model::processNode(aiNode *node, const aiScene *scene)
     }
 }
 
-mylib::Mesh mylib::Model::processMesh(aiMesh *mesh, const aiScene *scene)
+mylib::Mesh mylib::Model::processMesh(const aiMesh *mesh, const aiScene *scene)
 {
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
@@ -85,33 +85,60 @@ mylib::Mesh mylib::Model::processMesh(aiMesh *mesh, const aiScene *scene)
     }
 
     // process material
-    if(mesh->mMaterialIndex > 0)
+    if (scene->HasMaterials())
     {
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        std::vector<mylib::Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE);
-        textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        std::vector<mylib::Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR);
-        textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        std::vector<mylib::Texture> diffuseMaps = loadMaterialTextures(scene, material, 
+                                        aiTextureType_DIFFUSE);
+        textures.insert(textures.end(),
+            std::make_move_iterator(diffuseMaps.begin()),
+            std::make_move_iterator(diffuseMaps.end()));
+
+        std::vector<mylib::Texture> specularMaps = loadMaterialTextures(scene, material, 
+                                        aiTextureType_SPECULAR);
+        textures.insert(textures.end(),
+            std::make_move_iterator(specularMaps.begin()),
+            std::make_move_iterator(specularMaps.end()));
     }
 
-    return mylib::Mesh(vertices, indices, textures);
+    return mylib::Mesh(std::move(vertices), std::move(indices), std::move(textures));
 
 }
 
-std::vector<mylib::Texture> mylib::Model::loadMaterialTextures(aiMaterial *material, aiTextureType type)
+std::vector<mylib::Texture> mylib::Model::loadMaterialTextures(const aiScene* scene, const aiMaterial *material, const aiTextureType type)
 {
-    std::vector<Texture> textures;
+    std::vector<mylib::Texture> textures;
     for(unsigned int i = 0; i < material->GetTextureCount(type); i++)
     {
         aiString str;
         material->GetTexture(type, i, &str);
-        std::string filename = std::string(str.C_Str());
-        filename = m_directory + "/" + filename;
-        Texture texture;
-        texture.loadTexture(mylib::TextureDimension::DIM2, filename.c_str());
-        texture.setTypeName(static_cast<mylib::TextureType>(type));
-        textures.push_back(texture);
-    }
-    return textures;
+        mylib::Texture texture;
 
+        if (str.C_Str()[0] == '*') // Embedded texture
+        {
+            int index = atoi(str.C_Str() + 1);
+            aiTexture* tex = scene->mTextures[index];
+
+            unsigned char* data = reinterpret_cast<unsigned char*>(tex->pcData);
+            if (tex->mHeight == 0) // Compressed data (e.g. PNG or JPEG)
+            {
+                size_t size = tex->mWidth;
+                texture.loadTexture(mylib::TextureDimension::DIM2, data, size);
+            }
+            else
+            {
+                texture.loadTexture(mylib::TextureDimension::DIM2, tex->mWidth, tex->mHeight, data, GL_BGRA);
+            }
+        }
+        else
+        {
+            std::cout << "TEXTURE::NOT SUPPORTED RIGHT NOW" << std::endl;
+            texture.loadTexture(mylib::TextureDimension::DIM2, "");
+        }
+
+        texture.setTypeName(static_cast<mylib::TextureType>(type));
+        textures.push_back(std::move(texture));
+    }
+
+    return textures;
 }

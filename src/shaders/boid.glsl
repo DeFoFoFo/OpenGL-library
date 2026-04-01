@@ -1,7 +1,7 @@
 #version 430
 layout(local_size_x = 256) in;
 
-#define BOX_SIZE 20
+#define BOX_SIZE 100
 
 struct Boid
 {

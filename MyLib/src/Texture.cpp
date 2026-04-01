@@ -21,6 +21,24 @@ mylib::Texture::~Texture()
         glDeleteTextures(1, &m_ID);
 }
 
+mylib::Texture::Texture(Texture &&other) noexcept
+    : m_ID(other.m_ID), m_dimension(other.m_dimension), m_typeName(other.m_typeName)
+{
+    other.m_ID = 0;
+}
+
+mylib::Texture &mylib::Texture::operator=(Texture &&other) noexcept
+{
+    if (this != &other) {
+        if (m_ID) glDeleteTextures(1, &m_ID);
+        m_ID = other.m_ID;
+        other.m_ID = 0;
+        m_dimension = other.m_dimension;
+        m_typeName = other.m_typeName;
+    }
+    return *this;
+}
+
 void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePath, bool flip)
 {
     m_dimension = static_cast<GLenum>(dimension);
@@ -30,58 +48,110 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
     stbi_set_flip_vertically_on_load(flip);
     
     int width, height, nrChannels;
-    unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 4);
+
+    stbi_set_flip_vertically_on_load(false);
 
     if (data)
     {
-        GLenum format{GL_RGBA};
-        switch (nrChannels)
-        {
-            case 1:
-            {
-                format = GL_RED;
-                break;
-            }
-            case 2:
-            {
-                format = GL_RG;
-                break;
-            }
-            case 3:
-            {
-                format = GL_RGB;
-                break;
-            }
-            case 4:
-            {
-                format = GL_RGBA;
-                break;
-            }
-            default:
-            {
-                std::cerr << "MYLIB::ERROR::TEXTURE::UNSUPPORTED_FORMAT\tPATH: " << filePath << "\tCHANNELS: " << nrChannels << std::endl; 
-            }
-        }
+        GLint prevAlignment;
+        glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevAlignment);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         switch (m_dimension)
         {
             case GL_TEXTURE_1D:
             {
-                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, width, 0, format, GL_UNSIGNED_BYTE, data);
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
                 break;
             }
             case GL_TEXTURE_2D:
             {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
                 break;
             }
         }
         glGenerateMipmap(m_dimension);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, prevAlignment);
     }
     else
         std::cerr << "MYLIB::ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE\tPATH:" << filePath << std::endl;
 
     stbi_image_free(data);
+}
+
+void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data, size_t size)
+{
+    m_dimension = static_cast<GLenum>(dimension);
+
+    bind();
+
+    int width, height, nrChannels;
+    unsigned char* decoded = stbi_load_from_memory(data, size, &width, &height, &nrChannels, 4);
+
+    if (decoded)
+    {
+        GLint prevAlignment;
+        glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevAlignment);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        switch (m_dimension)
+        {
+            case GL_TEXTURE_1D:
+            {
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
+                break;
+            }
+            case GL_TEXTURE_2D:
+            {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
+                break;
+            }
+        }
+        glGenerateMipmap(m_dimension);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, prevAlignment);
+    }
+    else
+        std::cerr << "MYLIB::ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE_FROM_MEMORY" << std::endl;
+
+    stbi_image_free(decoded);
+}
+
+void mylib::Texture::loadTexture(TextureDimension dimension, int width, int height, unsigned char *data, GLenum format)
+{
+    if (!data)
+    {
+        std::cerr << "MYLIB::ERROR::TEXTURE::LOADED_NULL_DATA" << std::endl;
+    }
+    m_dimension = static_cast<GLenum>(dimension);
+
+    bind();
+
+    GLint prevAlignment;
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevAlignment);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    switch (m_dimension)
+    {
+        case GL_TEXTURE_1D:
+        {
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, format, GL_UNSIGNED_BYTE, data);
+            break;
+        }
+        case GL_TEXTURE_2D:
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            break;
+        }
+    }
+    glGenerateMipmap(m_dimension);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, prevAlignment);
 }
 
 void mylib::Texture::bind(uint16_t slot) const
@@ -124,20 +194,20 @@ mylib::Sampler::~Sampler()
 
 void mylib::Sampler::addWrapParameter(GLenum wrapDimension, WrapParam parameter)
 {
-    glSamplerParameteri(m_dimension, wrapDimension, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_ID, wrapDimension, static_cast<GLuint>(parameter));
 }
 
 void mylib::Sampler::addMagParameter(GLenum filter, MinMagFilterParam parameter)
 {
-    glSamplerParameteri(m_dimension, filter, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_ID, filter, static_cast<GLuint>(parameter));
 }
 
 void mylib::Sampler::bind(uint16_t slot) const
 {
-    glBindSampler(GL_TEXTURE0 + slot, m_ID);
+    glBindSampler(slot, m_ID);
 }
 
 void mylib::Sampler::unbind(uint16_t slot) const
 {
-    glBindSampler(GL_TEXTURE0 + slot, 0);
+    glBindSampler(slot, 0);
 }

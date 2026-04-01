@@ -26,7 +26,7 @@ public:
     std::vector<GLuint> indices;
     std::vector<Texture> textures;
     
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures);
+    Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures);
     Mesh(Mesh&&) = default;
     Mesh& operator=(Mesh&&) = default;
     Mesh(const Mesh&) = delete;
