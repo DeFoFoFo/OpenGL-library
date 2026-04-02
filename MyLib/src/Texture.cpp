@@ -127,7 +127,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, int width, int heig
     {
         std::cerr << "MYLIB::ERROR::TEXTURE::LOADED_NULL_DATA" << std::endl;
     }
-    m_dimension = static_cast<GLenum>(dimension);
+    m_dimension = toGL(dimension);
 
     bind();
 
@@ -180,8 +180,13 @@ void mylib::Texture::setTypeName(mylib::TextureType type)
     m_typeName = type;
 }
 
+constexpr GLenum mylib::Texture::toGL(TextureDimension dimension)
+{
+    return static_cast<GLenum>(dimension);
+}
+
 mylib::Sampler::Sampler(TextureDimension dimension)
-    : m_dimension{static_cast<GLenum>(dimension)}
+    : m_dimension{toGL(dimension)}
 {
     glGenSamplers(1, &m_ID);
 }
@@ -192,14 +197,14 @@ mylib::Sampler::~Sampler()
         glDeleteSamplers(1, &m_ID);
 }
 
-void mylib::Sampler::addWrapParameter(GLenum wrapDimension, WrapParam parameter)
+void mylib::Sampler::addWrapParameter(WrapDimension wrapDimension, WrapParam parameter)
 {
-    glSamplerParameteri(m_ID, wrapDimension, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_ID, toGL(wrapDimension), toGL(parameter));
 }
 
-void mylib::Sampler::addMagParameter(GLenum filter, MinMagFilterParam parameter)
+void mylib::Sampler::addMagParameter(MinMagFilter filter, MinMagFilterParam parameter)
 {
-    glSamplerParameteri(m_ID, filter, static_cast<GLuint>(parameter));
+    glSamplerParameteri(m_ID, toGL(filter), toGL(parameter));
 }
 
 void mylib::Sampler::bind(uint16_t slot) const
@@ -210,4 +215,29 @@ void mylib::Sampler::bind(uint16_t slot) const
 void mylib::Sampler::unbind(uint16_t slot) const
 {
     glBindSampler(slot, 0);
+}
+
+constexpr GLenum mylib::Sampler::toGL(mylib::WrapDimension wrapDimension)
+{
+    return static_cast<GLenum>(wrapDimension);
+}
+
+constexpr GLenum mylib::Sampler::toGL(mylib::WrapParam param)
+{
+    return static_cast<GLenum>(param);
+}
+
+constexpr GLenum mylib::Sampler::toGL(mylib::MinMagFilter filter)
+{
+    return static_cast<GLenum>(filter);
+}
+
+constexpr GLenum mylib::Sampler::toGL(mylib::MinMagFilterParam param)
+{
+    return static_cast<GLenum>(param);
+}
+
+constexpr GLenum mylib::Sampler::toGL(TextureDimension dimension)
+{
+    return static_cast<GLenum>(dimension);
 }

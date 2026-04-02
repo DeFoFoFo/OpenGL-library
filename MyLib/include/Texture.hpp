@@ -16,14 +16,22 @@ enum class TextureType : GLuint
     SPECULAR                 = 2, // Reflection
 };
 
-enum class TextureDimension : GLuint
+enum class TextureDimension : GLenum
 {
     DIM1                     = GL_TEXTURE_1D,
     DIM2                     = GL_TEXTURE_2D,
 //    TEXT3D                     = GL_TEXTURE_3D // Currently not supported
 };
 
-enum class WrapParam : GLuint
+enum class WrapDimension : GLenum
+{
+    WRAP_R                 = GL_TEXTURE_WRAP_R,
+    WRAP_X                 = GL_TEXTURE_WRAP_R,
+    WRAP_S                 = GL_TEXTURE_WRAP_S,
+    WRAP_Y                 = GL_TEXTURE_WRAP_S,
+};
+
+enum class WrapParam : GLenum
 {
     CLAMP_TO_BORDER        = GL_CLAMP_TO_BORDER,         // Clamps the texture to the border (if specified)
     CLAMP_TO_EDGE          = GL_CLAMP_TO_EDGE,           // Clamps to the edge of the surface
@@ -33,7 +41,14 @@ enum class WrapParam : GLuint
     MIRRORED_CLAMP_TO_EDGE = GL_MIRROR_CLAMP_TO_EDGE     // Avoids artifacts when CLAMP_TO_EDGE samples near a border
 #endif
 };
-enum class MinMagFilterParam : GLuint
+
+enum class MinMagFilter : GLenum
+{
+    MAG                    = GL_TEXTURE_MAG_FILTER,
+    MIN                    = GL_TEXTURE_MIN_FILTER,
+};
+
+enum class MinMagFilterParam : GLenum
 {
     NEAREST                = GL_NEAREST,                 // Closest texel as a pixel (pixelated)
     LINEAR                 = GL_LINEAR,                  // Weighted average of closest texels (blurred)
@@ -49,14 +64,20 @@ public:
     Sampler(TextureDimension dimension);
     ~Sampler();
 
-    void addWrapParameter(GLenum wrapDimension, WrapParam parameter);
-    void addMagParameter(GLenum filter, MinMagFilterParam parameter);
+    void addWrapParameter(WrapDimension wrapDimension, WrapParam parameter);
+    void addMagParameter(MinMagFilter filter, MinMagFilterParam parameter);
 
     void bind(uint16_t slot = 0) const;
     void unbind(uint16_t slot = 0) const;
 private:
     GLuint m_ID;
-    GLenum m_dimension;
+    GLenum m_dimension = GL_TEXTURE_2D;
+
+    constexpr GLenum toGL(WrapDimension wrapDimension);
+    constexpr GLenum toGL(WrapParam param);
+    constexpr GLenum toGL(MinMagFilter filter);
+    constexpr GLenum toGL(MinMagFilterParam param);
+    constexpr GLenum toGL(TextureDimension dimension);
 };
 
 class Texture
@@ -78,12 +99,14 @@ public:
     void unbind() const;
 
     GLuint ID() const;
-    mylib::TextureType getTypeName() const;
-    void setTypeName(mylib::TextureType type);
+    TextureType getTypeName() const;
+    void setTypeName(TextureType type);
 private:
     GLuint m_ID;
     GLenum m_dimension = GL_TEXTURE_2D;
     TextureType m_typeName; // ex: diffuse, specular, emission
+
+    constexpr GLenum toGL(TextureDimension dimension);
 };
 
 } // namespace mylib
