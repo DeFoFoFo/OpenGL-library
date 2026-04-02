@@ -1,12 +1,10 @@
 #version 430
 layout(local_size_x = 256) in;
 
-#define BOX_SIZE 100
-
 struct Boid
 {
-    vec4 position_radius;
-    vec4 velocity_neighborCount;
+    vec3 position;
+    vec3 velocity;
 };
 
 layout(std430, binding = 0) buffer inBoidBuffer
@@ -21,70 +19,77 @@ layout(std430, binding = 1) buffer outBoidBuffer
 
 uniform float dT;
 
+uniform float radiusOfInfluence;
+uniform float maxSpeed;
+uniform float boxSize;
+
 void main() {
     uint idx = gl_GlobalInvocationID.x;
     // The local group exceeds the work group
     if (idx >= inBoids.length()) return;
 
-    Boid this_boid = inBoids[idx];
-    vec3 pos = this_boid.position_radius.xyz;
-    vec3 velocity = this_boid.velocity_neighborCount.xyz;
+    Boid boid = inBoids[idx];
+    vec3 pos = boid.position;
+    vec3 velocity = boid.velocity;
 
-    float neighbour_count = 0;
-    float radius_neighbours = this_boid.position_radius.w;
+    float neighbours = 0;
 
-    vec3 cohesion_force = vec3(0.0f);
-    vec3 alignment_force = vec3(0.0f);
-    vec3 separation_force = vec3(0.0f);
-    vec3 avoidance_force = vec3(0.0f);
+    vec3 cohesionForce = vec3(0.0f);
+    vec3 alignmentForce = vec3(0.0f);
+    vec3 separationForce = vec3(0.0f);
+    vec3 avoidanceForce = vec3(0.0f);
 
-    float cohesion_weight = 1.0f;
-    float alignment_weight = 5.0f;
-    float separation_weight = 2.0f;
-    float avoidance_weight = 1.0f;
+    float cohesionWeight = 1.0f;
+    float alignmentWeight = 5.0f;
+    float separationWeight = 5.0f;
+    float avoidanceWeight = 1.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
     {
-        // Skip this_boid
+        // Skip boid
         if (i == idx)
             continue;
 
         // Skip if the distance between the two boids is greater than the view radius
-        Boid other_boid = inBoids[i];
-        vec3 direction_to_other_boid = other_boid.position_radius.xyz - pos;
-        float dist = length(direction_to_other_boid);
-        if (dist > radius_neighbours)
+        Boid otherBoid = inBoids[i];
+        vec3 dirToOtherBoid = otherBoid.position - pos;
+        float dist = length(dirToOtherBoid);
+        if (dist > radiusOfInfluence)
             continue;
         
         // If we are here, the other boid is a neighbour
-        neighbour_count++;
+        neighbours++;
         
-        cohesion_force += other_boid.position_radius.xyz;
-        alignment_force += other_boid.velocity_neighborCount.xyz;
-        separation_force -= direction_to_other_boid * dist;
+        cohesionForce += otherBoid.position;
+        alignmentForce += otherBoid.velocity;
+        separationForce -= dirToOtherBoid * dist;
     }
-    if (neighbour_count != 0)
+    if (neighbours != 0)
     {
-        cohesion_force /= neighbour_count;
-        alignment_force /= neighbour_count;
-        separation_force /= neighbour_count;
+        cohesionForce /= neighbours;
+        alignmentForce /= neighbours;
+        separationForce /= neighbours;
     }
-    cohesion_force -= pos;
+    cohesionForce -= pos;
 
     vec3 acceleration = (
-        cohesion_force * cohesion_weight 
-        + alignment_force * alignment_weight
-        + separation_force * separation_weight
-        + avoidance_force * avoidance_weight
+        cohesionForce * cohesionWeight 
+        + alignmentForce * alignmentWeight
+        + separationForce * separationWeight
+        + avoidanceForce * avoidanceWeight
     );
 
     velocity += acceleration * dT;
-    velocity = clamp(velocity, vec3(-2.0), vec3(2.0));
+    float speed = length(velocity);
+    if (speed > maxSpeed)
+    {
+        velocity = normalize(velocity) * maxSpeed;
+    }
 
     pos += velocity * dT;
     // Clamp it inside the box's dimensions
-    pos = mod(pos + BOX_SIZE/2, BOX_SIZE) - BOX_SIZE/2;
+    pos = mod(pos + boxSize/2, boxSize) - boxSize/2;
 
-    outBoids[idx].position_radius = vec4(pos, radius_neighbours);
-    outBoids[idx].velocity_neighborCount = vec4(velocity, neighbour_count);
+    outBoids[idx].position = pos;
+    outBoids[idx].velocity = velocity;
 }

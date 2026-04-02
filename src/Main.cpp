@@ -20,7 +20,7 @@
 
 constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
-constexpr uint32_t BOX_SIZE = 100;
+constexpr uint32_t boxSize = 50;
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
@@ -65,10 +65,10 @@ int main()
     glfwSwapInterval(0);
 
     mylib::Sampler sampler2D{mylib::TextureDimension::DIM2};
-    sampler2D.addWrapParameter(GL_TEXTURE_WRAP_R, mylib::WrapParam::REPEAT);
-    sampler2D.addWrapParameter(GL_TEXTURE_WRAP_S, mylib::WrapParam::REPEAT);
-    sampler2D.addMagParameter(GL_TEXTURE_MAG_FILTER, mylib::MinMagFilterParam::NEAREST);
-    sampler2D.addMagParameter(GL_TEXTURE_MIN_FILTER, mylib::MinMagFilterParam::NEAREST);
+    sampler2D.addWrapParameter(mylib::WrapDimension::WRAP_R, mylib::WrapParam::REPEAT);
+    sampler2D.addWrapParameter(mylib::WrapDimension::WRAP_S, mylib::WrapParam::REPEAT);
+    sampler2D.addMagParameter(mylib::MinMagFilter::MAG, mylib::MinMagFilterParam::NEAREST);
+    sampler2D.addMagParameter(mylib::MinMagFilter::MIN, mylib::MinMagFilterParam::NEAREST);
     GLint maxUnits;
     glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxUnits);
     std::cout << "Max texture units: " << maxUnits << std::endl;
@@ -77,37 +77,53 @@ int main()
         sampler2D.bind(i);
     }
 
-    const float radius_of_neighbours = 2.0f;
-    uint32_t num_of_boids{3000};
-    std::vector<Boid> boids;
-    boids.reserve(num_of_boids);
-    for (size_t i{}; i < num_of_boids; ++i)
-    {
-        float xPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
-        float yPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
-        float zPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
+    mylib::ComputeShader compBoid{"src/shaders/boid.glsl"};
+    mylib::Shader boidShader{"src/shaders/boid_shader.vert", "src/shaders/boid_shader.frag"};
 
-        float xVelocity{(float)randomNumberWithin(-2, 2)};
-        float yVelocity{(float)randomNumberWithin(-2, 2)};
-        float zVelocity{(float)randomNumberWithin(-2, 2)};
+    mylib::Shader cubeShader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
+
+    mylib::Shader meshShader{"src/shaders/mesh.vert", "src/shaders/mesh.frag"};
+
+    mylib::Model bird{"assets/Bird.glb"};
+
+    const float radiusOfInfluence = 2.0f;
+    const float maxSpeed = 5.0f;
+
+    uint32_t numBoids{10000};
+    std::vector<Boid> boids;
+    boids.reserve(numBoids);
+    for (size_t i{}; i < numBoids; ++i)
+    {
+        float xPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
+        float yPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
+        float zPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
+
+        float xVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
+        float yVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
+        float zVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
 
         boids.emplace_back(
-            glm::vec4(xPos, yPos, zPos, radius_of_neighbours),
-            glm::vec4(xVelocity, yVelocity, zVelocity, 0.0f)
+            glm::vec3(xPos, yPos, zPos),
+            glm::vec3(xVelocity, yVelocity, zVelocity)
         );
     }
+
+    compBoid.bind();
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfInfluence"), radiusOfInfluence);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxSpeed"), maxSpeed);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "boxSize"), boxSize);
 
     mylib::VertexArray boidVAO;
 
     mylib::VertexBufferLayout boidLayout;
-    boidLayout.push(4, GL_FLOAT);
-    boidLayout.push(4, GL_FLOAT);
+    boidLayout.push(4, GL_FLOAT); // padding
+    boidLayout.push(4, GL_FLOAT); // padding
 
     mylib::Buffer SSBO[2];
     for (int i{}; i < 2; ++i)
     {
         SSBO[i].bindAs(mylib::BufferTarget::SSBO);
-        SSBO[i].fill(mylib::BufferTarget::SSBO, num_of_boids * sizeof(Boid), boids.data(), GL_STREAM_DRAW);
+        SSBO[i].fill(mylib::BufferTarget::SSBO, numBoids * sizeof(Boid), boids.data(), GL_STREAM_DRAW);
     }
 
     int readIdx = 0;
@@ -116,15 +132,6 @@ int main()
     boidVAO.addBuffer(SSBO[readIdx], boidLayout);
 
     const GLuint LOCAL_SIZE = 256;
-
-    mylib::ComputeShader comp_boid{"src/shaders/boid.glsl"};
-    mylib::Shader boid_shader{"src/shaders/boid_shader.vert", "src/shaders/boid_shader.frag"};
-
-    mylib::Shader cube_shader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
-
-    mylib::Shader meshShader{"src/shaders/mesh.vert", "src/shaders/mesh.frag"};
-
-    mylib::Model dodeca{"assets/Bird.glb"};
 
     GLfloat vertices[]  = {
         1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,  1.0f,-1.0f, 1.0f, // v0,v1,v2,v3 (front)
@@ -158,8 +165,8 @@ int main()
     cubeEBO.fill(mylib::BufferTarget::EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
-    cube_shader.bind();
-    glUniform4fv(glGetUniformLocation(cube_shader.getID(), "uColor"), 1, glm::value_ptr(color));
+    cubeShader.bind();
+    glUniform4fv(glGetUniformLocation(cubeShader.getID(), "uColor"), 1, glm::value_ptr(color));
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -172,16 +179,16 @@ int main()
         // If framerate is lower than 5 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
-        // std::cout << 1/dT << " " << num_of_boids << std::endl;
+        std::cout << 1/dT << " " << numBoids << std::endl;
 
         processInput(window);
 
         SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
         SSBO[writeIdx].bindBase(mylib::BufferTarget::SSBO, 1);
 
-        comp_boid.bind();
-        glUniform1f(glGetUniformLocation(comp_boid.getID(), "dT"), dT);
-        comp_boid.dispatch((num_of_boids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
+        compBoid.bind();
+        glUniform1f(glGetUniformLocation(compBoid.getID(), "dT"), dT);
+        compBoid.dispatch((numBoids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
         std::swap(readIdx, writeIdx);
@@ -193,16 +200,17 @@ int main()
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);        
 
-        boid_shader.bind();
+        boidShader.bind();
         
-        glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(boid_shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         boidVAO.bind();
         SSBO[readIdx].bindAs(mylib::BufferTarget::VBO);
-                
-        renderer.draw(boidVAO, num_of_boids, boid_shader, mylib::Primitive::POINTS);
+        boidVAO.addBuffer(SSBO[readIdx], boidLayout); // update VAO binding to active SSBO
+
+        renderer.draw(boidVAO, numBoids, boidShader, mylib::Primitive::POINTS);
 
         meshShader.bind();
 
@@ -212,16 +220,16 @@ int main()
 
         glUniform1f(glGetUniformLocation(meshShader.getID(), "time"), time);
 
-        renderer.draw(dodeca, meshShader);
+        renderer.draw(bird, meshShader);
         
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(50.0f));
+        model = glm::scale(model, glm::vec3(boxSize/2));
 
-        cube_shader.bind();
+        cubeShader.bind();
 
-        glUniformMatrix4fv(glGetUniformLocation(cube_shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(cube_shader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(cube_shader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         cubeVAO.bind();
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
