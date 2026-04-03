@@ -41,7 +41,7 @@ void main() {
 
     float cohesionWeight = 1.0f;
     float alignmentWeight = 5.0f;
-    float separationWeight = 5.0f;
+    float separationWeight = 1.0f;
     float avoidanceWeight = 1.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
@@ -60,7 +60,7 @@ void main() {
         // If we are here, the other boid is a neighbour
         neighbours++;
         
-        cohesionForce += otherBoid.position;
+        cohesionForce += otherBoid.position - pos;
         alignmentForce += otherBoid.velocity;
         separationForce -= dirToOtherBoid * dist;
     }
@@ -70,7 +70,6 @@ void main() {
         alignmentForce /= neighbours;
         separationForce /= neighbours;
     }
-    cohesionForce -= pos;
 
     vec3 acceleration = (
         cohesionForce * cohesionWeight 
