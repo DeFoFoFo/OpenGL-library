@@ -17,7 +17,7 @@ void mylib::Renderer::draw(const mylib::VertexArray &VAO, GLuint count, const Sh
     glDrawArrays(toGL(primitive), 0, count);
 }
 
-void mylib::Renderer::draw(const mylib::Mesh &mesh, const Shader &shader, Primitive primitive) const
+static void setUpMeshDraw(const mylib::Mesh &mesh, const mylib::Shader &shader)
 {
     shader.bind();
 
@@ -52,8 +52,18 @@ void mylib::Renderer::draw(const mylib::Mesh &mesh, const Shader &shader, Primit
     }
 
     mesh.getVAO().bind();
-    
+}
+
+void mylib::Renderer::draw(const mylib::Mesh &mesh, const Shader &shader, Primitive primitive) const
+{
+    setUpMeshDraw(mesh, shader);
     glDrawElements(toGL(primitive), mesh.indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void mylib::Renderer::drawInstanced(const mylib::Mesh &mesh, const GLuint count, const Shader &shader, Primitive primitive) const
+{
+    setUpMeshDraw(mesh, shader);
+    glDrawElementsInstanced(toGL(primitive), mesh.indices.size(), GL_UNSIGNED_INT, 0, count);
 }
 
 void mylib::Renderer::draw(const mylib::Model &model, const Shader &shader, Primitive primitive) const
@@ -62,6 +72,15 @@ void mylib::Renderer::draw(const mylib::Model &model, const Shader &shader, Prim
     for (const auto& mesh : meshes)
     {
         draw(mesh, shader, primitive);
+    }
+}
+
+void mylib::Renderer::drawInstanced(const mylib::Model &model, const GLuint count, const Shader &shader, Primitive primitive) const
+{
+    const std::vector<mylib::Mesh>& meshes = model.getMeshes();
+    for (const auto& mesh : meshes)
+    {
+        drawInstanced(mesh, count, shader, primitive);
     }
 }
 

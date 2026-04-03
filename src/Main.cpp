@@ -20,7 +20,7 @@
 
 constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
-constexpr uint32_t boxSize = 50;
+constexpr uint32_t boxSize = 500;
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
@@ -77,19 +77,21 @@ int main()
         sampler2D.bind(i);
     }
 
+    camera.setSpeed(20.0f);
+    
     mylib::ComputeShader compBoid{"src/shaders/boid.glsl"};
     mylib::Shader boidShader{"src/shaders/boid_shader.vert", "src/shaders/boid_shader.frag"};
 
     mylib::Shader cubeShader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
 
-    mylib::Shader meshShader{"src/shaders/mesh.vert", "src/shaders/mesh.frag"};
-
     mylib::Model bird{"assets/Bird.glb"};
 
-    const float radiusOfInfluence = 2.0f;
-    const float maxSpeed = 5.0f;
+    const float radiusOfInfluence = 50.0f;
+    const float maxSpeed = 25.0f;
+    const float minSpeed = 15.0f;
+    const float maxForce = 30.0f;
 
-    uint32_t numBoids{10000};
+    uint32_t numBoids{1000};
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
@@ -108,17 +110,6 @@ int main()
         );
     }
 
-    compBoid.bind();
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfInfluence"), radiusOfInfluence);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxSpeed"), maxSpeed);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "boxSize"), boxSize);
-
-    mylib::VertexArray boidVAO;
-
-    mylib::VertexBufferLayout boidLayout;
-    boidLayout.push(4, GL_FLOAT); // padding
-    boidLayout.push(4, GL_FLOAT); // padding
-
     mylib::Buffer SSBO[2];
     for (int i{}; i < 2; ++i)
     {
@@ -129,7 +120,12 @@ int main()
     int readIdx = 0;
     int writeIdx = 1;
 
-    boidVAO.addBuffer(SSBO[readIdx], boidLayout);
+    compBoid.bind();
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfInfluence"), radiusOfInfluence);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxSpeed"), maxSpeed);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "minSpeed"), minSpeed);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxForce"), maxForce);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "boxSize"), boxSize);
 
     const GLuint LOCAL_SIZE = 256;
 
@@ -179,7 +175,7 @@ int main()
         // If framerate is lower than 5 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
-        std::cout << 1/dT << " " << numBoids << std::endl;
+        // std::cout << 1/dT << " " << numBoids << std::endl;
 
         processInput(window);
 
@@ -202,25 +198,21 @@ int main()
 
         boidShader.bind();
         
-        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+        // Model is computed inside compute shader
         glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        glUniform1f(glGetUniformLocation(boidShader.getID(), "time"), time);
 
-        boidVAO.bind();
-        SSBO[readIdx].bindAs(mylib::BufferTarget::VBO);
-        boidVAO.addBuffer(SSBO[readIdx], boidLayout); // update VAO binding to active SSBO
+        const std::vector<mylib::Mesh>& birdMeshes = bird.getMeshes();
+        
+        for (const auto& mesh : birdMeshes)
+        {
+            mesh.getVAO();
+            SSBO[readIdx].bindAs(mylib::BufferTarget::SSBO);
+            SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
+        }
 
-        renderer.draw(boidVAO, numBoids, boidShader, mylib::Primitive::POINTS);
-
-        meshShader.bind();
-
-        glUniformMatrix4fv(glGetUniformLocation(meshShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(meshShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(meshShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-
-        glUniform1f(glGetUniformLocation(meshShader.getID(), "time"), time);
-
-        renderer.draw(bird, meshShader);
+        renderer.drawInstanced(bird, numBoids, boidShader);
         
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(boxSize/2));
