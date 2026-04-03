@@ -5,6 +5,7 @@ struct Boid
 {
     vec3 position;
     vec3 velocity;
+    mat4 model;
 };
 
 layout(std430, binding = 0) buffer inBoidBuffer
@@ -21,6 +22,8 @@ uniform float dT;
 
 uniform float radiusOfInfluence;
 uniform float maxSpeed;
+uniform float minSpeed;
+uniform float maxForce;
 uniform float boxSize;
 
 void main() {
@@ -39,9 +42,9 @@ void main() {
     vec3 separationForce = vec3(0.0f);
     vec3 avoidanceForce = vec3(0.0f);
 
-    float cohesionWeight = 1.0f;
+    float cohesionWeight = 10.0f;
     float alignmentWeight = 5.0f;
-    float separationWeight = 1.0f;
+    float separationWeight = 15.0f;
     float avoidanceWeight = 1.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
@@ -62,7 +65,7 @@ void main() {
         
         cohesionForce += otherBoid.position - pos;
         alignmentForce += otherBoid.velocity;
-        separationForce -= dirToOtherBoid * dist;
+        separationForce -= dirToOtherBoid * dist * dist;
     }
     if (neighbours != 0)
     {
@@ -71,24 +74,52 @@ void main() {
         separationForce /= neighbours;
     }
 
-    vec3 acceleration = (
-        cohesionForce * cohesionWeight 
-        + alignmentForce * alignmentWeight
-        + separationForce * separationWeight
-        + avoidanceForce * avoidanceWeight
-    );
+    vec3 desiredVelocity = normalize(cohesionForce) * cohesionWeight 
+                      + normalize(alignmentForce) * alignmentWeight
+                      + normalize(separationForce) * separationWeight
+                      + normalize(avoidanceForce) * avoidanceWeight;
 
-    velocity += acceleration * dT;
+    vec3 steering = desiredVelocity - velocity;
+    if (length(steering) > maxForce)
+    {
+        steering = normalize(steering) * maxForce;
+    }
+
+    velocity += steering * dT;
     float speed = length(velocity);
     if (speed > maxSpeed)
     {
         velocity = normalize(velocity) * maxSpeed;
+    }
+    else if (speed < minSpeed)
+    {
+        velocity = normalize(velocity) * minSpeed;
     }
 
     pos += velocity * dT;
     // Clamp it inside the box's dimensions
     pos = mod(pos + boxSize/2, boxSize) - boxSize/2;
 
+    // Compute rotation
+    vec3 forward = vec3(0.0f, 0.0f, 1.0f);
+    vec3 right = vec3(1.0f, 0.0f, 0.0f);
+    vec3 up = vec3(0.0f, 1.0f, 0.0f);
+
+    if (length(velocity) > 1e-5)
+    {
+        forward = normalize(velocity);
+        vec3 worldUp = abs(forward.y) < 0.999f ? vec3(0.0f, 1.0f, 0.0f) : vec3(1.0f, 0.0f, 0.0f);
+        right = normalize(cross(worldUp, forward));
+        up = normalize(cross(forward, right));
+    }
+
+    mat4 model = mat4(1.0f);
+    model[0].xyz = right;
+    model[1].xyz = up;
+    model[2].xyz = forward;
+    model[3].xyz = pos;
+
     outBoids[idx].position = pos;
     outBoids[idx].velocity = velocity;
+    outBoids[idx].model = model;
 }
