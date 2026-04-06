@@ -20,7 +20,7 @@
 
 constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
-constexpr uint32_t boxSize = 500;
+constexpr uint32_t boxSize = 200;
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
@@ -80,18 +80,19 @@ int main()
     camera.setSpeed(20.0f);
     
     mylib::ComputeShader compBoid{"src/shaders/boid.glsl"};
-    mylib::Shader boidShader{"src/shaders/boid_shader.vert", "src/shaders/boid_shader.frag"};
+    mylib::Shader boidShader{"src/shaders/fish.vert", "src/shaders/boid.frag"};
 
     mylib::Shader cubeShader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
 
-    mylib::Model bird{"assets/Bird.glb"};
+    mylib::Model bird{"assets/Clown_fish.glb"};
 
-    const float radiusOfInfluence = 50.0f;
+    const float radiusOfInfluence = 20.0f;
+    const float radiusOfSeparation = 10.0f;
     const float maxSpeed = 25.0f;
-    const float minSpeed = 15.0f;
-    const float maxForce = 30.0f;
+    const float minSpeed = 10.0f;
+    const float maxForce = 15.0f;
 
-    uint32_t numBoids{1000};
+    uint32_t numBoids{10000};
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
@@ -122,6 +123,7 @@ int main()
 
     compBoid.bind();
     glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfInfluence"), radiusOfInfluence);
+    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfSeparation"), radiusOfSeparation);
     glUniform1f(glGetUniformLocation(compBoid.getID(), "maxSpeed"), maxSpeed);
     glUniform1f(glGetUniformLocation(compBoid.getID(), "minSpeed"), minSpeed);
     glUniform1f(glGetUniformLocation(compBoid.getID(), "maxForce"), maxForce);
@@ -175,7 +177,7 @@ int main()
         // If framerate is lower than 5 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
-        // std::cout << 1/dT << " " << numBoids << std::endl;
+        std::cout << 1/dT << std::endl;
 
         processInput(window);
 

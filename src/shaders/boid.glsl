@@ -21,6 +21,7 @@ layout(std430, binding = 1) buffer outBoidBuffer
 uniform float dT;
 
 uniform float radiusOfInfluence;
+uniform float radiusOfSeparation;
 uniform float maxSpeed;
 uniform float minSpeed;
 uniform float maxForce;
@@ -42,9 +43,9 @@ void main() {
     vec3 separationForce = vec3(0.0f);
     vec3 avoidanceForce = vec3(0.0f);
 
-    float cohesionWeight = 10.0f;
-    float alignmentWeight = 5.0f;
-    float separationWeight = 15.0f;
+    float cohesionWeight = 0.2f;
+    float alignmentWeight = 0.5f;
+    float separationWeight = 1.0f;
     float avoidanceWeight = 1.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
@@ -56,6 +57,7 @@ void main() {
         // Skip if the distance between the two boids is greater than the view radius
         Boid otherBoid = inBoids[i];
         vec3 dirToOtherBoid = otherBoid.position - pos;
+
         float dist = length(dirToOtherBoid);
         if (dist > radiusOfInfluence)
             continue;
@@ -65,19 +67,20 @@ void main() {
         
         cohesionForce += otherBoid.position - pos;
         alignmentForce += otherBoid.velocity;
-        separationForce -= dirToOtherBoid * dist * dist;
+
+        if (dist < radiusOfSeparation)
+            separationForce -= dirToOtherBoid / (dist * dist);
     }
     if (neighbours != 0)
     {
         cohesionForce /= neighbours;
         alignmentForce /= neighbours;
-        separationForce /= neighbours;
     }
 
-    vec3 desiredVelocity = normalize(cohesionForce) * cohesionWeight 
-                      + normalize(alignmentForce) * alignmentWeight
-                      + normalize(separationForce) * separationWeight
-                      + normalize(avoidanceForce) * avoidanceWeight;
+    vec3 desiredVelocity = cohesionForce * cohesionWeight 
+                         + alignmentForce * alignmentWeight
+                         + separationForce * separationWeight
+                         + avoidanceForce * avoidanceWeight;
 
     vec3 steering = desiredVelocity - velocity;
     if (length(steering) > maxForce)
