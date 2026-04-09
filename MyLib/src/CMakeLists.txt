@@ -11,6 +11,7 @@ target_sources(mylib PRIVATE
     Buffer.cpp
     Mesh.cpp
     Model.cpp
+    Window.cpp
 )
 
 target_include_directories(mylib PUBLIC
@@ -29,7 +30,7 @@ target_link_libraries(mylib
 )
 
 target_compile_features(mylib PUBLIC
-    cxx_std_20
+    cxx_std_23
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

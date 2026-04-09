@@ -4,15 +4,9 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "Defines.hpp"
-#include "ComputeShader.hpp"
-#include "Shader.hpp"
-#include "Camera.hpp"
+#include "Mylib.hpp"
+
 #include "Boid.hpp"
-#include "Texture.hpp"
-#include "VertexArray.hpp"
-#include "Renderer.hpp"
-#include "Model.hpp"
 
 #include <iostream>
 #include <vector>
@@ -22,7 +16,6 @@ constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
 constexpr uint32_t boxSize = 200;
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 void processInput(GLFWwindow* window);
@@ -40,33 +33,18 @@ float lastTime{};
 int main()
 {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "Test", NULL, NULL);
-    if (!window)
-    {
-        std::cerr << "Failed to create window" << std::endl;
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
+    mylib::Window window{WIN_WIDTH, WIN_HEIGHT, "Boids"};
+    
+    glfwSetCursorPosCallback(window.getHandle(), mouseCallback);
+    glfwSetScrollCallback(window.getHandle(), scrollCallback);
 
-    if (!gladLoadGL(glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize glad" << std::endl;
-        return -1;
-    }
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    glfwSetCursorPosCallback(window, mouseCallback);
-    glfwSetScrollCallback(window, scrollCallback);
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glfwSwapInterval(0);
 
     mylib::Sampler sampler2D{mylib::TextureDimension::DIM2};
-    sampler2D.addWrapParameter(mylib::WrapDimension::WRAP_R, mylib::WrapParam::REPEAT);
-    sampler2D.addWrapParameter(mylib::WrapDimension::WRAP_S, mylib::WrapParam::REPEAT);
+    sampler2D.addWrapParameter(mylib::Wrap::WRAP_R, mylib::WrapParam::REPEAT);
+    sampler2D.addWrapParameter(mylib::Wrap::WRAP_S, mylib::WrapParam::REPEAT);
     sampler2D.addMagParameter(mylib::MinMagFilter::MAG, mylib::MinMagFilterParam::NEAREST);
     sampler2D.addMagParameter(mylib::MinMagFilter::MIN, mylib::MinMagFilterParam::NEAREST);
     GLint maxUnits;
@@ -79,20 +57,20 @@ int main()
 
     camera.setSpeed(20.0f);
     
-    mylib::ComputeShader compBoid{"src/shaders/boid.glsl"};
+    mylib::ComputeShader compBoid{"src/shaders/boid.comp"};
     mylib::Shader boidShader{"src/shaders/fish.vert", "src/shaders/boid.frag"};
 
     mylib::Shader cubeShader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
 
     mylib::Model bird{"assets/Clown_fish.glb"};
 
-    const float radiusOfInfluence = 20.0f;
-    const float radiusOfSeparation = 10.0f;
-    const float maxSpeed = 25.0f;
-    const float minSpeed = 10.0f;
-    const float maxForce = 15.0f;
+    const float radiusOfInfluence = 15.0f;
+    const float radiusOfSeparation = 5.0f;
+    const float maxSpeed = 15.0f;
+    const float minSpeed = 3.0f;
+    const float maxForce = 30.0f;
 
-    uint32_t numBoids{10000};
+    uint32_t numBoids{5000};
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
@@ -121,13 +99,12 @@ int main()
     int readIdx = 0;
     int writeIdx = 1;
 
-    compBoid.bind();
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfInfluence"), radiusOfInfluence);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfSeparation"), radiusOfSeparation);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxSpeed"), maxSpeed);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "minSpeed"), minSpeed);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxForce"), maxForce);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "boxSize"), boxSize);
+    compBoid.setUniform(radiusOfInfluence, "radiusOfInfluence");
+    compBoid.setUniform(radiusOfSeparation, "radiusOfSeparation");
+    compBoid.setUniform(maxSpeed, "maxSpeed");
+    compBoid.setUniform(minSpeed, "minSpeed");
+    compBoid.setUniform(maxForce, "maxForce");
+    compBoid.setUniform(boxSize, "boxSize");
 
     const GLuint LOCAL_SIZE = 256;
 
@@ -163,31 +140,30 @@ int main()
     cubeEBO.fill(mylib::BufferTarget::EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
-    cubeShader.bind();
-    glUniform4fv(glGetUniformLocation(cubeShader.getID(), "uColor"), 1, glm::value_ptr(color));
+    cubeShader.setUniform(color, "uColor");
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     mylib::Renderer renderer;
 
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window.getHandle()))
     {
         float time = (float)glfwGetTime();
         // If framerate is lower than 5 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
-        std::cout << 1/dT << std::endl;
+        // std::cout << 1/dT << std::endl;
 
-        processInput(window);
+        processInput(window.getHandle());
 
         SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
         SSBO[writeIdx].bindBase(mylib::BufferTarget::SSBO, 1);
 
         compBoid.bind();
-        glUniform1f(glGetUniformLocation(compBoid.getID(), "dT"), dT);
+        compBoid.setUniform(dT, "dT");
         compBoid.dispatch((numBoids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+        compBoid.barrier(mylib::MemoryBarrier::SSBO);
 
         std::swap(readIdx, writeIdx);
 
@@ -196,14 +172,12 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);        
-
-        boidShader.bind();
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);
         
         // Model is computed inside compute shader
-        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform1f(glGetUniformLocation(boidShader.getID(), "time"), time);
+        boidShader.setUniform(view, "view");
+        boidShader.setUniform(projection, "projection");
+        boidShader.setUniform(time, "time");
 
         const std::vector<mylib::Mesh>& birdMeshes = bird.getMeshes();
         
@@ -219,26 +193,19 @@ int main()
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(boxSize/2));
 
-        cubeShader.bind();
-
-        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        cubeShader.setUniform(model, "model");
+        cubeShader.setUniform(view, "view");
+        cubeShader.setUniform(projection, "projection");
 
         cubeVAO.bind();
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.getHandle());
         glfwPollEvents();
     }
 
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(window.getHandle());
     glfwTerminate();
-}
-
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
 }
 
 void mouseCallback(GLFWwindow* window, double xPosIn, double yPosIn)

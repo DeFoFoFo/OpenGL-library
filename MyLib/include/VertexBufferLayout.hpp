@@ -58,15 +58,8 @@ public:
         }
     }
 
-    inline const std::vector<VertexBufferElement>& getElements() const
-    {
-        return m_elements;
-    }
-
-    inline uint32_t getStride() const
-    {
-        return m_stride;
-    }
+    constexpr inline const std::vector<VertexBufferElement>& getElements() const {return m_elements;}
+    constexpr inline uint32_t getStride() const {return m_stride;}
 
 private:
     std::vector<VertexBufferElement> m_elements;

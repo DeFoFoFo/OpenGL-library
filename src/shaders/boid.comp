@@ -5,6 +5,7 @@ struct Boid
 {
     vec3 position;
     vec3 velocity;
+    vec3 acceleration;
     mat4 model;
 };
 
@@ -25,7 +26,7 @@ uniform float radiusOfSeparation;
 uniform float maxSpeed;
 uniform float minSpeed;
 uniform float maxForce;
-uniform float boxSize;
+uniform uint boxSize;
 
 void main() {
     uint idx = gl_GlobalInvocationID.x;
@@ -43,9 +44,9 @@ void main() {
     vec3 separationForce = vec3(0.0f);
     vec3 avoidanceForce = vec3(0.0f);
 
-    float cohesionWeight = 0.2f;
-    float alignmentWeight = 0.5f;
-    float separationWeight = 1.0f;
+    float cohesionWeight = 10.0f;
+    float alignmentWeight = 20.0f;
+    float separationWeight = 100.0f;
     float avoidanceWeight = 1.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
@@ -59,17 +60,22 @@ void main() {
         vec3 dirToOtherBoid = otherBoid.position - pos;
 
         float dist = length(dirToOtherBoid);
+
+        // If true, the other boid is too far
         if (dist > radiusOfInfluence)
             continue;
+
+        // If we are too close we only apply a separation force
+        if (dist < radiusOfSeparation) {
+            separationForce -= dirToOtherBoid / (dist * dist);
+            continue;
+        }
         
         // If we are here, the other boid is a neighbour
         neighbours++;
         
         cohesionForce += otherBoid.position - pos;
         alignmentForce += otherBoid.velocity;
-
-        if (dist < radiusOfSeparation)
-            separationForce -= dirToOtherBoid / (dist * dist);
     }
     if (neighbours != 0)
     {
@@ -82,21 +88,22 @@ void main() {
                          + separationForce * separationWeight
                          + avoidanceForce * avoidanceWeight;
 
-    vec3 steering = desiredVelocity - velocity;
-    if (length(steering) > maxForce)
+    vec3 acceleration = desiredVelocity - velocity;
+    float accelerationMagnitude = length(acceleration);
+    if (accelerationMagnitude > maxForce)
     {
-        steering = normalize(steering) * maxForce;
+        acceleration = (acceleration / accelerationMagnitude) * maxForce;
     }
 
-    velocity += steering * dT;
+    velocity += acceleration * dT;
     float speed = length(velocity);
     if (speed > maxSpeed)
     {
-        velocity = normalize(velocity) * maxSpeed;
+        velocity = (velocity / speed) * maxSpeed;
     }
-    else if (speed < minSpeed)
+    else if (speed < minSpeed && speed > 0.0f)
     {
-        velocity = normalize(velocity) * minSpeed;
+        velocity = (velocity / speed) * minSpeed;
     }
 
     pos += velocity * dT;
@@ -108,9 +115,9 @@ void main() {
     vec3 right = vec3(1.0f, 0.0f, 0.0f);
     vec3 up = vec3(0.0f, 1.0f, 0.0f);
 
-    if (length(velocity) > 1e-5)
+    if (speed > 1e-5)
     {
-        forward = normalize(velocity);
+        forward = (velocity / speed); // normalize
         vec3 worldUp = abs(forward.y) < 0.999f ? vec3(0.0f, 1.0f, 0.0f) : vec3(1.0f, 0.0f, 0.0f);
         right = normalize(cross(worldUp, forward));
         up = normalize(cross(forward, right));

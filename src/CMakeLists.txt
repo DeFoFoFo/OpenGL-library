@@ -17,7 +17,7 @@ target_link_libraries(mytest PRIVATE
 )
 
 target_compile_features(mytest PUBLIC
-    cxx_std_20
+    cxx_std_23
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

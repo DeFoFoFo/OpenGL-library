@@ -47,7 +47,7 @@ static void setUpMeshDraw(const mylib::Mesh &mesh, const mylib::Shader &shader)
                 std::cerr << "MYLIB::ERROR::RENDERER::UNSUPPORTED_TEXTURE" << std::endl;
         }
 
-        glUniform1i(glGetUniformLocation(shader.getID(), ("material." + name).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader.ID(), ("material." + name).c_str()), i);
         mesh.textures[i].bind(i);
     }
 
@@ -102,9 +102,4 @@ void mylib::Renderer::backgroundColor(float r, float g, float b, float a) const
 void mylib::Renderer::clear() const
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-constexpr GLenum mylib::Renderer::toGL(Primitive primitive) const
-{
-    return static_cast<GLenum>(primitive);
 }

@@ -4,6 +4,7 @@ struct Boid
 {
     vec3 position;
     vec3 velocity;
+    vec3 acceleration;
     mat4 model;
 };
 
@@ -29,6 +30,11 @@ void main()
     Boid boid = boids[idx];
 
     vec3 pos = vPos;
+
+    float baseMovement = 3.0f;
+    float speed = length(boid.velocity);
+    float amplitude = 0.2f;
+    pos.x += amplitude * cos(time * (baseMovement + speed) + pos.z + idx/20);
 
     gl_Position = projection * view * boid.model * vec4(pos, 1.0f);
 

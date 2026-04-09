@@ -1,10 +1,23 @@
 #include "Model.hpp"
 
+#include "GLFW/glfw3.h"
+
+#include "Defines.hpp"
+
 #include <iostream>
 
 mylib::Model::Model(const char *path)
 {
+#if DEBUG == true
+    float startTime = glfwGetTime();
+#endif
+
     loadModel(path);
+
+#if DEBUG == true
+    float loadTime = glfwGetTime() - startTime;
+    std::cout << "MYLIB::MODEL::LOADED_IN " << loadTime * 1000 << "ms\tPATH: " << path << std::endl;
+#endif
 }
 
 const std::vector<mylib::Mesh>& mylib::Model::getMeshes() const
@@ -22,7 +35,7 @@ void mylib::Model::loadModel(std::string path)
         std::cerr << "MYLIB::ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
-    m_path = path;
+    m_directory = path.substr(0, path.find_last_of('/'));
 
     processNode(scene->mRootNode, scene);
 }
@@ -89,13 +102,13 @@ mylib::Mesh mylib::Model::processMesh(const aiMesh *mesh, const aiScene *scene)
     {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         std::vector<mylib::Texture> diffuseMaps = loadMaterialTextures(scene, material, 
-                                        aiTextureType_DIFFUSE);
+                                                  aiTextureType_DIFFUSE);
         textures.insert(textures.end(),
             std::make_move_iterator(diffuseMaps.begin()),
             std::make_move_iterator(diffuseMaps.end()));
 
         std::vector<mylib::Texture> specularMaps = loadMaterialTextures(scene, material, 
-                                        aiTextureType_SPECULAR);
+                                                   aiTextureType_SPECULAR);
         textures.insert(textures.end(),
             std::make_move_iterator(specularMaps.begin()),
             std::make_move_iterator(specularMaps.end()));
@@ -120,20 +133,20 @@ std::vector<mylib::Texture> mylib::Model::loadMaterialTextures(const aiScene* sc
             aiTexture* tex = scene->mTextures[index];
 
             unsigned char* data = reinterpret_cast<unsigned char*>(tex->pcData);
-            if (tex->mHeight == 0) // Compressed data (e.g. PNG or JPEG)
+            if (tex->mHeight == 0) // Compressed data (ex: PNG, JPEG)
             {
                 size_t size = tex->mWidth;
                 texture.loadTexture(mylib::TextureDimension::DIM2, data, size);
             }
-            else
+            else // Uncompressed data (ex: RAW)
             {
                 texture.loadTexture(mylib::TextureDimension::DIM2, tex->mWidth, tex->mHeight, data, GL_BGRA);
             }
         }
-        else
+        else // Separate texture (ex: OBJ)
         {
-            std::cout << "TEXTURE::NOT SUPPORTED RIGHT NOW" << std::endl;
-            texture.loadTexture(mylib::TextureDimension::DIM2, "");
+            std::string fileName = m_directory + '/' + str.C_Str();
+            texture.loadTexture(mylib::TextureDimension::DIM2, fileName.c_str());
         }
 
         texture.setTypeName(static_cast<mylib::TextureType>(type));

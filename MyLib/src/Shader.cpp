@@ -1,6 +1,7 @@
 #include "Shader.hpp"
 
 #include "GLFW/glfw3.h"
+#include "glm/gtc/type_ptr.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -58,10 +59,52 @@ void mylib::Shader::bind() const
     glUseProgram(m_ID);
 }
 
-// Returns the program ID
-GLuint mylib::Shader::getID() const
+void mylib::Shader::setUniform(const int uniform, const std::string name)
 {
-    return m_ID;
+    bind();
+    glUniform1i(getUniformLocation(name), uniform);
+}
+
+void mylib::Shader::setUniform(const uint32_t uniform, const std::string name)
+{
+    bind();
+    glUniform1ui(getUniformLocation(name), uniform);
+}
+
+void mylib::Shader::setUniform(const float uniform, const std::string name)
+{
+    bind();
+    glUniform1f(getUniformLocation(name), uniform);
+}
+
+void mylib::Shader::setUniform(const glm::vec2 uniform, const std::string name)
+{
+    bind();
+    glUniform2fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
+}
+
+void mylib::Shader::setUniform(const glm::vec3 uniform, const std::string name)
+{
+    bind();
+    glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
+}
+
+void mylib::Shader::setUniform(const glm::vec4 uniform, const std::string name)
+{
+    bind();
+    glUniform4fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
+}
+
+void mylib::Shader::setUniform(const glm::mat3 uniform, const std::string name)
+{
+    bind();
+    glUniformMatrix3fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));
+}
+
+void mylib::Shader::setUniform(const glm::mat4 uniform, const std::string name)
+{
+    bind();
+    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));
 }
 
 // Reads a file and returns its content
@@ -108,4 +151,15 @@ void mylib::Shader::checkLinkStatus(const char* vsFilePath, const char* fsFilePa
                                                     << "\"\tFRAGMENT_PATH: \"" << fsFilePath << "\"\n"
                                                     << infoLog << std::endl;
     }
+}
+
+GLuint mylib::Shader::getUniformLocation(const std::string name)
+{
+    auto it = m_uniforms.find(name);
+    if (it != m_uniforms.end())
+        return it->second;
+    
+    GLuint location = glGetUniformLocation(m_ID, name.data());
+    m_uniforms.insert({name, location});
+    return location;
 }

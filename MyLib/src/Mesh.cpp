@@ -6,21 +6,6 @@ mylib::Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std
     setupMesh();
 }
 
-const mylib::VertexArray& mylib::Mesh::getVAO() const
-{
-    return m_VAO;
-}
-
-const mylib::Buffer &mylib::Mesh::getVBO() const
-{
-    return m_VBO;
-}
-
-const mylib::Buffer &mylib::Mesh::getEBO() const
-{
-    return m_EBO;
-}
-
 void mylib::Mesh::setupMesh()
 {
     m_VAO.bind();
