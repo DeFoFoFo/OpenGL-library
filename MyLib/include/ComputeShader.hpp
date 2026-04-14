@@ -6,6 +6,7 @@
 #include "glad/gl.h"
 
 #include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -41,11 +42,15 @@ class ComputeShader
 {
 public:
     ComputeShader();
-    explicit ComputeShader(const char* filePath);
+    explicit ComputeShader(std::string filePath);
+    ComputeShader(ComputeShader&& other) noexcept;
+    ComputeShader& operator=(ComputeShader&& other) noexcept;
+    ComputeShader(const ComputeShader&) = delete;
+    ComputeShader operator=(const ComputeShader&) = delete;
     ~ComputeShader();
 
-    void assign(const char* filePath);
-    void bind() const;
+    void assign(std::string filePath);
+    inline void bind() const {glUseProgram(m_ID);}
     void dispatch(uint32_t x, uint32_t y, uint32_t z) const;
     template <typename... Bits>
     void barrier(Bits... bits)
@@ -53,23 +58,25 @@ public:
         glMemoryBarrier(bitwiseOr(bits...));
     }
     constexpr inline GLuint ID() const {return m_ID;}
+    void recompile();
 
-    void setUniform(const int uniform, const std::string name);
-    void setUniform(const uint32_t uniform, const std::string name);
-    void setUniform(const float uniform, const std::string name);
-    void setUniform(const glm::vec2 uniform, const std::string name);
-    void setUniform(const glm::vec3 uniform, const std::string name);
-    void setUniform(const glm::vec4 uniform, const std::string name);
-    void setUniform(const glm::mat3 uniform, const std::string name);
-    void setUniform(const glm::mat4 uniform, const std::string name);
+    inline void setUniform(const int uniform, std::string name) {glUniform1i(getUniformLocation(name), uniform);}
+    inline void setUniform(const uint32_t uniform, std::string name) {glUniform1ui(getUniformLocation(name), uniform);}
+    inline void setUniform(const float uniform, std::string name) {glUniform1f(getUniformLocation(name), uniform);}
+    inline void setUniform(const glm::vec2 uniform, std::string name) {glUniform2fv(getUniformLocation(name), 1, glm::value_ptr(uniform));}
+    inline void setUniform(const glm::vec3 uniform, std::string name) {glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(uniform));}
+    inline void setUniform(const glm::vec4 uniform, std::string name) {glUniform4fv(getUniformLocation(name), 1, glm::value_ptr(uniform));}
+    inline void setUniform(const glm::mat3 uniform, std::string name) {glUniformMatrix3fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));}
+    inline void setUniform(const glm::mat4 uniform, std::string name) {glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));}
+
 private:
     GLuint m_ID;
-    std::unordered_map<std::string, GLuint> m_uniforms;
+    std::unordered_map<std::string, GLint> m_uniforms;
 
-    std::string readFile(const char* filePath);
-    void checkCompileStatus(GLuint shader, const char* filePath);
-    void checkLinkStatus(const char* filePath);
-    GLuint getUniformLocation(const std::string name);
+    std::string readFile(std::string filePath);
+    void checkCompileStatus(GLuint shader, std::string filePath);
+    void checkLinkStatus(std::string filePath);
+    GLint getUniformLocation(std::string name);
     constexpr inline GLbitfield toGL(mylib::MemoryBarrier bit) const {return static_cast<GLbitfield>(bit);}
 
     template <typename... Bits>

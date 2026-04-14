@@ -39,9 +39,9 @@ public:
     void fill(const BufferTarget target, GLsizeiptr size, const void* data, GLenum usage);
     void update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void* data);
 
-    void bindAs(const BufferTarget target) const;
-    void unbindAs(const BufferTarget target) const;
-    void bindBase(const BufferTarget target, GLuint index) const;
+    inline void bindAs(const BufferTarget target) const {glBindBuffer(toGL(target), m_ID);}
+    inline void unbindAs(const BufferTarget target) const {glBindBuffer(toGL(target), 0);}
+    inline void bindBase(const BufferTarget target, GLuint index) const {glBindBufferBase(toGL(target), index, m_ID);}
 
     constexpr inline GLuint ID() const {return m_ID;}
 private:

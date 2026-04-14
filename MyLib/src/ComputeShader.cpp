@@ -7,15 +7,33 @@
 #include <fstream>
 #include <sstream>
 
-#include "glm/gtc/type_ptr.hpp"
-
 mylib::ComputeShader::ComputeShader()
 {}
 
 // Expects a filepath to the compute shader
-mylib::ComputeShader::ComputeShader(const char* filePath)
+mylib::ComputeShader::ComputeShader(std::string filePath)
 {
     assign(filePath);
+}
+
+mylib::ComputeShader::ComputeShader(ComputeShader &&other) noexcept
+    : m_ID{other.m_ID}, m_uniforms{other.m_uniforms}
+{
+    other.m_ID = 0;
+    other.m_uniforms.clear();
+}
+
+mylib::ComputeShader &mylib::ComputeShader::operator=(ComputeShader &&other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_ID) glDeleteProgram(m_ID);
+        m_ID = other.m_ID;
+        m_uniforms = other.m_uniforms;
+        other.m_ID = 0;
+        other.m_uniforms.clear();
+    }
+    return *this;
 }
 
 mylib::ComputeShader::~ComputeShader()
@@ -27,7 +45,7 @@ mylib::ComputeShader::~ComputeShader()
 }
 
 // Expects a filepath to the compute shader
-void mylib::ComputeShader::assign(const char* filePath)
+void mylib::ComputeShader::assign(std::string filePath)
 {
     if (!MIN_OPENGL_VERSION(4,3))
     {
@@ -51,67 +69,14 @@ void mylib::ComputeShader::assign(const char* filePath)
     checkLinkStatus(filePath);
 }
 
-void mylib::ComputeShader::bind() const
-{
-    glUseProgram(m_ID);
-}
-
 // Specifies the sizes of the work groups in the x, y and z axes
 void mylib::ComputeShader::dispatch(uint32_t x, uint32_t y, uint32_t z) const
 {
     glDispatchCompute(x, y, z);
 }
 
-void mylib::ComputeShader::setUniform(const int uniform, const std::string name)
-{
-    bind();
-    glUniform1i(getUniformLocation(name), uniform);
-}
-
-void mylib::ComputeShader::setUniform(const uint32_t uniform, const std::string name)
-{
-    bind();
-    glUniform1ui(getUniformLocation(name), uniform);
-}
-
-void mylib::ComputeShader::setUniform(const float uniform, const std::string name)
-{
-    bind();
-    glUniform1f(getUniformLocation(name), uniform);
-}
-
-void mylib::ComputeShader::setUniform(const glm::vec2 uniform, const std::string name)
-{
-    bind();
-    glUniform2fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
-}
-
-void mylib::ComputeShader::setUniform(const glm::vec3 uniform, const std::string name)
-{
-    bind();
-    glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
-}
-
-void mylib::ComputeShader::setUniform(const glm::vec4 uniform, const std::string name)
-{
-    bind();
-    glUniform4fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
-}
-
-void mylib::ComputeShader::setUniform(const glm::mat3 uniform, const std::string name)
-{
-    bind();
-    glUniformMatrix3fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));
-}
-
-void mylib::ComputeShader::setUniform(const glm::mat4 uniform, const std::string name)
-{
-    bind();
-    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));
-}
-
 // Reads a file and returns its content
-std::string mylib::ComputeShader::readFile(const char* filePath)
+std::string mylib::ComputeShader::readFile(std::string filePath)
 {
     std::ifstream file{filePath};
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -130,7 +95,7 @@ std::string mylib::ComputeShader::readFile(const char* filePath)
     return "";
 }
 
-void mylib::ComputeShader::checkCompileStatus(GLuint shader, const char* filePath)
+void mylib::ComputeShader::checkCompileStatus(GLuint shader, std::string filePath)
 {
     int success;
     char infoLog[512];
@@ -142,7 +107,7 @@ void mylib::ComputeShader::checkCompileStatus(GLuint shader, const char* filePat
     }
 }
 
-void mylib::ComputeShader::checkLinkStatus(const char* filePath)
+void mylib::ComputeShader::checkLinkStatus(std::string filePath)
 {
     int success;
     char infoLog[512];
@@ -154,13 +119,18 @@ void mylib::ComputeShader::checkLinkStatus(const char* filePath)
     }
 }
 
-GLuint mylib::ComputeShader::getUniformLocation(const std::string name)
+GLint mylib::ComputeShader::getUniformLocation(std::string name)
 {
     auto it = m_uniforms.find(name);
     if (it != m_uniforms.end())
         return it->second;
     
-    GLuint location = glGetUniformLocation(m_ID, name.data());
+    GLint location = glGetUniformLocation(m_ID, name.c_str());
+#if DEBUG == true
+    if (location == -1)
+        std::cerr << "MYLIB::ERROR::COMPUTE_SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
+#endif
+
     m_uniforms.insert({name, location});
     return location;
 }

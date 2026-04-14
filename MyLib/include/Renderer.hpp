@@ -23,6 +23,20 @@ enum class Primitive : GLenum
     TRIANGLE_FAN   = GL_TRIANGLE_FAN      // Each added vertex forms a new triangle with the last vertex and the first (Requires at least 3 vertices)
 };
 
+enum class DrawMode : GLenum
+{
+    FILL      = GL_FILL,   // Renders faces as filled triangles
+    WIREFRAME = GL_LINE,   // Renders faces with connected vertices
+    NO_FILL   = GL_POINT   // Renders faces with vertices only
+};
+
+enum class Face : GLenum
+{
+    FRONT_AND_BACK = GL_FRONT_AND_BACK,   // Regardles of inside or outside the mesh
+    FRONT          = GL_FRONT,            // Usually means outside the mesh
+    BACK           = GL_BACK              // Usually means inside the mesh
+};
+
 class Renderer
 {
 public:
@@ -37,12 +51,15 @@ public:
     void draw(const mylib::Model& model, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
     void drawInstanced(const mylib::Model& model, const GLuint count, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
 
-    void wireframe(bool state) const;
+    void drawMode(mylib::DrawMode mode) const;
+    void drawMode(mylib::Face face, mylib::DrawMode mode) const;
     void backgroundColor(glm::vec4 color) const;
     void backgroundColor(float r, float g, float b, float a) const;
     void clear() const;
 private:
     constexpr inline GLenum toGL(Primitive primitive) const {return static_cast<GLenum>(primitive);};
+    constexpr inline GLenum toGL(DrawMode mode) const {return static_cast<GLenum>(mode);}
+    constexpr inline GLenum toGL(Face face) const {return static_cast<GLenum>(face);}
 };
 
 } // namespace mylib

@@ -51,18 +51,3 @@ void mylib::Buffer::update(const BufferTarget target, GLsizeiptr size, GLintptr 
     glBufferSubData(toGL(target), offset, size, data);
     m_size = size;
 }
-
-void mylib::Buffer::bindAs(const BufferTarget target) const
-{
-    glBindBuffer(toGL(target), m_ID);
-}
-
-void mylib::Buffer::unbindAs(const BufferTarget target) const
-{
-    glBindBuffer(toGL(target), 0);
-}
-
-void mylib::Buffer::bindBase(const BufferTarget target, GLuint index) const
-{
-    glBindBufferBase(toGL(target), index, m_ID);
-}

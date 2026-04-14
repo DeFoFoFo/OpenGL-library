@@ -1,7 +1,8 @@
 #include "Shader.hpp"
 
 #include "GLFW/glfw3.h"
-#include "glm/gtc/type_ptr.hpp"
+
+#include "Defines.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -12,9 +13,29 @@ mylib::Shader::Shader()
 {}
 
 // Expects a file path to the vertex shader and then the fragment shader
-mylib::Shader::Shader(const char* vsFilePath, const char* fsFilePath)
+mylib::Shader::Shader(std::string vsFilePath, std::string fsFilePath)
 {
     assign(vsFilePath, fsFilePath);
+}
+
+mylib::Shader::Shader(Shader &&other) noexcept
+    : m_ID{other.m_ID}, m_uniforms{other.m_uniforms}
+{
+    other.m_ID = 0;
+    other.m_uniforms.clear();
+}
+
+mylib::Shader &mylib::Shader::operator=(Shader &&other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_ID) glDeleteProgram(m_ID);
+        m_ID = other.m_ID;
+        m_uniforms = other.m_uniforms;
+        other.m_ID = 0;
+        other.m_uniforms.clear();
+    }
+    return *this;
 }
 
 mylib::Shader::~Shader()
@@ -26,7 +47,7 @@ mylib::Shader::~Shader()
 }
 
 // Expects a file path to the vertex shader and then the fragment shader
-void mylib::Shader::assign(const char* vsFilePath, const char* fsFilePath)
+void mylib::Shader::assign(std::string vsFilePath, std::string fsFilePath)
 {
     std::string vsCode{readFile(vsFilePath)}, fsCode{readFile(fsFilePath)};
     
@@ -54,61 +75,8 @@ void mylib::Shader::assign(const char* vsFilePath, const char* fsFilePath)
     checkLinkStatus(vsFilePath, fsFilePath);
 }
 
-void mylib::Shader::bind() const
-{
-    glUseProgram(m_ID);
-}
-
-void mylib::Shader::setUniform(const int uniform, const std::string name)
-{
-    bind();
-    glUniform1i(getUniformLocation(name), uniform);
-}
-
-void mylib::Shader::setUniform(const uint32_t uniform, const std::string name)
-{
-    bind();
-    glUniform1ui(getUniformLocation(name), uniform);
-}
-
-void mylib::Shader::setUniform(const float uniform, const std::string name)
-{
-    bind();
-    glUniform1f(getUniformLocation(name), uniform);
-}
-
-void mylib::Shader::setUniform(const glm::vec2 uniform, const std::string name)
-{
-    bind();
-    glUniform2fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
-}
-
-void mylib::Shader::setUniform(const glm::vec3 uniform, const std::string name)
-{
-    bind();
-    glUniform3fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
-}
-
-void mylib::Shader::setUniform(const glm::vec4 uniform, const std::string name)
-{
-    bind();
-    glUniform4fv(getUniformLocation(name), 1, glm::value_ptr(uniform));
-}
-
-void mylib::Shader::setUniform(const glm::mat3 uniform, const std::string name)
-{
-    bind();
-    glUniformMatrix3fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));
-}
-
-void mylib::Shader::setUniform(const glm::mat4 uniform, const std::string name)
-{
-    bind();
-    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, glm::value_ptr(uniform));
-}
-
 // Reads a file and returns its content
-std::string mylib::Shader::readFile(const char* filePath)
+std::string mylib::Shader::readFile(std::string filePath)
 {
     std::ifstream file{filePath};
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -127,7 +95,7 @@ std::string mylib::Shader::readFile(const char* filePath)
     return "";
 }
 
-void mylib::Shader::checkCompileStatus(GLuint shader, const char* filePath)
+void mylib::Shader::checkCompileStatus(GLuint shader, std::string filePath)
 {
     int success;
     char infoLog[512];
@@ -139,7 +107,7 @@ void mylib::Shader::checkCompileStatus(GLuint shader, const char* filePath)
     }
 }
 
-void mylib::Shader::checkLinkStatus(const char* vsFilePath, const char* fsFilePath)
+void mylib::Shader::checkLinkStatus(std::string vsFilePath, std::string fsFilePath)
 {
     int success;
     char infoLog[512];
@@ -153,13 +121,18 @@ void mylib::Shader::checkLinkStatus(const char* vsFilePath, const char* fsFilePa
     }
 }
 
-GLuint mylib::Shader::getUniformLocation(const std::string name)
+GLint mylib::Shader::getUniformLocation(const std::string name)
 {
     auto it = m_uniforms.find(name);
     if (it != m_uniforms.end())
         return it->second;
     
-    GLuint location = glGetUniformLocation(m_ID, name.data());
+    GLint location = glGetUniformLocation(m_ID, name.c_str());
+#if DEBUG == true
+    if (location == -1)
+        std::cerr << "MYLIB::ERROR::SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
+#endif
+
     m_uniforms.insert({name, location});
     return location;
 }

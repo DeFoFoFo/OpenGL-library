@@ -89,31 +89,20 @@ void main() {
         alignmentForce /= neighbourWeightSum;
     }
 
-    float avoidanceDistance = boxSize / 2 - boxSize / 2 * 0.2;
+    float avoidanceDistance = boxSize / 2 - boxSize / 2 * 0.2f;
     if (pos.x > avoidanceDistance)
-    {
-        avoidanceForce += vec3(-1.0f, 0.0f, 0.0f) * (pos.x + avoidanceDistance);
-    } 
+        avoidanceForce += vec3(-1.0f, 0.0f, 0.0f) * 1000;
     else if (pos.x < -avoidanceDistance)
-    {
-        avoidanceForce += vec3(1.0f, 0.0f, 0.0f) * (pos.x - avoidanceDistance);
-    }
+        avoidanceForce += vec3(1.0f, 0.0f, 0.0f) * 1000;
     if (pos.y > avoidanceDistance)
-    {
-        avoidanceForce += vec3(0.0f, -1.0f, 0.0f) * (pos.y + avoidanceDistance);
-    }
+        avoidanceForce += vec3(0.0f, -1.0f, 0.0f) * 1000;
     else if (pos.y < -avoidanceDistance)
-    {
-        avoidanceForce += vec3(0.0f, 1.0f, 0.0f) * (pos.y - avoidanceDistance);
-    }
+        avoidanceForce += vec3(0.0f, 1.0f, 0.0f) * 1000;
     if (pos.z > avoidanceDistance)
-    {
-        avoidanceForce += vec3(0.0f, 0.0f, -1.0f) * (pos.z + avoidanceDistance);
-    }
+        avoidanceForce += vec3(0.0f, 0.0f, -1.0f) * 1000;
     else if (pos.z < -avoidanceDistance)
-    {
-        avoidanceForce += vec3(0.0f, 0.0f, 1.0f) * (pos.z - avoidanceDistance);
-    }
+        avoidanceForce += vec3(0.0f, 0.0f, 1.0f) * 1000;
+
 
     vec3 desiredVelocity = cohesionForce * cohesionWeight 
                          + alignmentForce * alignmentWeight

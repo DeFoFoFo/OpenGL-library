@@ -2,19 +2,17 @@
 
 #include "GLFW/glfw3.h"
 
-#include "Defines.hpp"
-
 #include <iostream>
 
 mylib::Model::Model(const char *path)
 {
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     float startTime = glfwGetTime();
 #endif
 
     loadModel(path);
 
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     float loadTime = glfwGetTime() - startTime;
     std::cout << "MYLIB::MODEL::LOADED_IN " << loadTime * 1000 << "ms\tPATH: " << path << std::endl;
 #endif
