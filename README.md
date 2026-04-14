@@ -1,2 +1,2 @@
-# OpenGL-library
-This is a small OpenGL library with sets of helper functions and classes
+# Boids
+This project uses the library for a flocking simulation
