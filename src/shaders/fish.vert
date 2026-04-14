@@ -32,7 +32,7 @@ void main()
     vec3 pos = vPos;
 
     float baseMovement = 3.0f;
-    float speed = length(boid.velocity);
+    float speed = length(boid.acceleration);
     float amplitude = 0.2f;
     pos.x += amplitude * cos(time * (baseMovement + speed) + pos.z + idx/20);
 

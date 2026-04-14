@@ -84,9 +84,14 @@ void mylib::Renderer::drawInstanced(const mylib::Model &model, const GLuint coun
     }
 }
 
-void mylib::Renderer::wireframe(bool state) const
+void mylib::Renderer::drawMode(mylib::DrawMode mode) const
 {
-    glPolygonMode(GL_FRONT_AND_BACK, (state) ? GL_LINE : GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, toGL(mode));
+}
+
+void mylib::Renderer::drawMode(mylib::Face face, mylib::DrawMode mode) const
+{
+    glPolygonMode(toGL(face), toGL(mode));
 }
 
 void mylib::Renderer::backgroundColor(glm::vec4 color) const

@@ -106,8 +106,10 @@ void mylib::Window::createWindow(const int32_t width, const int32_t height, cons
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#if MIN_OPENGL_VERSION(4,3) && DEBUG == true
+#ifdef MYLIB_DEBUG
+#if MIN_OPENGL_VERSION(4,3)
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#endif
 #endif
     m_handle = glfwCreateWindow(width, height, name.data(), 
                                 (fullscreen) ? glfwGetPrimaryMonitor() : nullptr, nullptr);
@@ -123,7 +125,8 @@ void mylib::Window::createWindow(const int32_t width, const int32_t height, cons
         throw std::runtime_error("Failed to initialize glad");
     }
 
-#if MIN_OPENGL_VERSION(4,3) && DEBUG == true
+#ifdef MYLIB_DEBUG
+#if MIN_OPENGL_VERSION(4,3)
     int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
     if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
     {
@@ -138,6 +141,7 @@ void mylib::Window::createWindow(const int32_t width, const int32_t height, cons
     //                       GL_DEBUG_TYPE_ERROR, 
     //                       GL_DEBUG_SEVERITY_HIGH,
     //                       0, nullptr, GL_TRUE);
+#endif
 #endif
 
     glfwSetWindowUserPointer(m_handle, this);
@@ -158,7 +162,7 @@ void mylib::Window::framebufferSizeCallback(GLFWwindow *window, int width, int h
         self->m_height = height;
     }
 
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     std::cout << "Resized: " << self->m_width << " " << self->m_height << std::endl;
 #endif
 }

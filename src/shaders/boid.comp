@@ -47,7 +47,7 @@ void main() {
     float cohesionWeight = 10.0f;
     float alignmentWeight = 20.0f;
     float separationWeight = 100.0f;
-    float avoidanceWeight = 1.0f;
+    float avoidanceWeight = 10.0f;
 
     for (uint i = 0; i < inBoids.length(); ++i)
     {
@@ -82,6 +82,21 @@ void main() {
         cohesionForce /= neighbours;
         alignmentForce /= neighbours;
     }
+
+    float avoidanceDistance = boxSize / 2 - boxSize / 2 * 0.2f;
+    if (pos.x > avoidanceDistance)
+        avoidanceForce += vec3(-1.0f, 0.0f, 0.0f) * 1000;
+    else if (pos.x < -avoidanceDistance)
+        avoidanceForce += vec3(1.0f, 0.0f, 0.0f) * 1000;
+    if (pos.y > avoidanceDistance)
+        avoidanceForce += vec3(0.0f, -1.0f, 0.0f) * 1000;
+    else if (pos.y < -avoidanceDistance)
+        avoidanceForce += vec3(0.0f, 1.0f, 0.0f) * 1000;
+    if (pos.z > avoidanceDistance)
+        avoidanceForce += vec3(0.0f, 0.0f, -1.0f) * 1000;
+    else if (pos.z < -avoidanceDistance)
+        avoidanceForce += vec3(0.0f, 0.0f, 1.0f) * 1000;
+
 
     vec3 desiredVelocity = cohesionForce * cohesionWeight 
                          + alignmentForce * alignmentWeight
@@ -131,5 +146,6 @@ void main() {
 
     outBoids[idx].position = pos;
     outBoids[idx].velocity = velocity;
+    outBoids[idx].acceleration = acceleration;
     outBoids[idx].model = model;
 }

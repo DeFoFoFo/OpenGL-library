@@ -68,7 +68,7 @@ int main()
     const float radiusOfSeparation = 5.0f;
     const float maxSpeed = 15.0f;
     const float minSpeed = 3.0f;
-    const float maxForce = 30.0f;
+    const float maxForce = 10.0f;
 
     uint32_t numBoids{5000};
     std::vector<Boid> boids;

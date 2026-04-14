@@ -43,7 +43,7 @@ mylib::Texture &mylib::Texture::operator=(Texture &&other) noexcept
 
 void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePath, bool flip)
 {
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     double startTime = glfwGetTime();
 #endif
 
@@ -87,7 +87,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
 
     stbi_image_free(data);
 
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     double timeOfLoading = glfwGetTime() - startTime;
     std::cout << "MYLIB::TEXTURE::LOADED_IN " << timeOfLoading * 1000 << "ms\tPATH: " << filePath << std::endl;
 #endif
@@ -95,7 +95,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
 
 void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data, size_t size)
 {
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     double startTime = glfwGetTime();
 #endif
 
@@ -135,7 +135,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data
 
     stbi_image_free(decoded);
 
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     double loadingTime = glfwGetTime() - startTime;
     std::cout << "MYLIB::TEXTURE::LOADED_IN " << loadingTime * 1000 << "ms" << std::endl;
 #endif
@@ -143,7 +143,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data
 
 void mylib::Texture::loadTexture(TextureDimension dimension, int width, int height, unsigned char *data, GLenum format)
 {
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     double startTime = glfwGetTime();
 #endif
 
@@ -177,7 +177,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, int width, int heig
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, prevAlignment);
 
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     double timeOfLoading = glfwGetTime() - startTime;
     std::cout << "MYLIB::TEXTURE::LOADED_IN " << timeOfLoading * 1000 << "ms" << std::endl;
 #endif
