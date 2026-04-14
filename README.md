@@ -14,7 +14,16 @@ cmake -S . -B build -G "MinGW Makefiles"
 cmake --build build
 ./build/myproject.exe
 ```
-Right now it has only been used with MinGW (GCC) but should work with MSVC according to previous testings
+Right now it has only been used with MinGW (GCC) but should work with MSVC according to previous testings.
+
+**If you want to have a debug context, replace**
+```
+cmake -S . -B build -G "MinGW Makefiles"
+```
+**with**
+```
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_CXX_FLAGS="-DMYLIB_DEBUG"
+```
 
 # Dependencies
 **GLAD** for opengl functions.
