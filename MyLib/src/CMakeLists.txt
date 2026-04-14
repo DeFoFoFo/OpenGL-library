@@ -12,6 +12,8 @@ target_sources(mylib PRIVATE
     Mesh.cpp
     Model.cpp
     Window.cpp
+    InputManager.cpp
+    Application.cpp
 )
 
 target_include_directories(mylib PUBLIC

@@ -39,16 +39,16 @@ public:
     void fill(const BufferTarget target, GLsizeiptr size, const void* data, GLenum usage);
     void update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void* data);
 
-    inline void bindAs(const BufferTarget target) const {glBindBuffer(toGL(target), m_ID);}
-    inline void unbindAs(const BufferTarget target) const {glBindBuffer(toGL(target), 0);}
-    inline void bindBase(const BufferTarget target, GLuint index) const {glBindBufferBase(toGL(target), index, m_ID);}
+    inline void bindAs(const BufferTarget target) const { glBindBuffer(toGL(target), m_ID); }
+    inline void unbindAs(const BufferTarget target) const { glBindBuffer(toGL(target), 0); }
+    inline void bindBase(const BufferTarget target, GLuint index) const { glBindBufferBase(toGL(target), index, m_ID); }
 
-    constexpr inline GLuint ID() const {return m_ID;}
+    constexpr inline GLuint ID() const { return m_ID; }
 private:
     GLuint m_ID = 0;
     GLuint m_size = 0;
 
-    constexpr inline GLenum toGL(BufferTarget target) const {return static_cast<GLenum>(target);}
+    constexpr inline GLenum toGL(BufferTarget target) const { return static_cast<GLenum>(target); }
 };
 
 } // namespace mylib

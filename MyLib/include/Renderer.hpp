@@ -32,9 +32,9 @@ enum class DrawMode : GLenum
 
 enum class Face : GLenum
 {
-    FRONT_AND_BACK = GL_FRONT_AND_BACK,   // Regardles of inside or outside the mesh
-    FRONT          = GL_FRONT,            // Usually means outside the mesh
-    BACK           = GL_BACK              // Usually means inside the mesh
+    FRONT_AND_BACK = GL_FRONT_AND_BACK,   // Regardless of inside or outside the mesh
+    FRONT          = GL_FRONT,            // Usually means the outside of the mesh
+    BACK           = GL_BACK              // Usually means the inside of the mesh
 };
 
 class Renderer
@@ -43,11 +43,9 @@ public:
     Renderer();
 
     void draw(const mylib::VertexArray& VAO, GLuint count, const Shader& shader, Primitive primitive = Primitive::POINTS) const;
-    void drawIndexed(const mylib::VertexArray& VAO, GLuint count, const Shader& shader, Primitive primitive = Primitive::POINTS) const;
-
+    void drawIndexed(const mylib::VertexArray& VAO, GLuint count, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
     void draw(const mylib::Mesh& mesh, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
     void drawInstanced(const mylib::Mesh& mesh, const GLuint count, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
-
     void draw(const mylib::Model& model, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
     void drawInstanced(const mylib::Model& model, const GLuint count, const Shader& shader, Primitive primitive = Primitive::TRIANGLES) const;
 
@@ -57,9 +55,9 @@ public:
     void backgroundColor(float r, float g, float b, float a) const;
     void clear() const;
 private:
-    constexpr inline GLenum toGL(Primitive primitive) const {return static_cast<GLenum>(primitive);};
-    constexpr inline GLenum toGL(DrawMode mode) const {return static_cast<GLenum>(mode);}
-    constexpr inline GLenum toGL(Face face) const {return static_cast<GLenum>(face);}
+    constexpr inline GLenum toGL(Primitive primitive) const { return static_cast<GLenum>(primitive); };
+    constexpr inline GLenum toGL(DrawMode mode) const { return static_cast<GLenum>(mode); }
+    constexpr inline GLenum toGL(Face face) const { return static_cast<GLenum>(face); }
 };
 
 } // namespace mylib

@@ -32,14 +32,14 @@ mylib::Buffer& mylib::Buffer::operator=(Buffer&& other) noexcept
     return *this;
 }
 
-void mylib::Buffer::fill(const BufferTarget target, GLsizeiptr size, const void *data, GLenum usage)
+void mylib::Buffer::fill(const BufferTarget target, GLsizeiptr size, const void* data, GLenum usage)
 {
     glBindBuffer(toGL(target), m_ID);
     glBufferData(toGL(target), size, data, usage);
     m_size = size;
 }
 
-void mylib::Buffer::update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void *data)
+void mylib::Buffer::update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void* data)
 {
     if (offset + size > m_size)
     {

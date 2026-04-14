@@ -25,7 +25,7 @@ public:
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
     std::vector<Texture> textures;
-    
+
     Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures);
     Mesh(Mesh&&) = default;
     Mesh& operator=(Mesh&&) = default;
@@ -33,9 +33,9 @@ public:
     Mesh& operator=(const Mesh&) = delete;
 
 
-    constexpr inline const VertexArray& getVAO() const {return m_VAO;}
-    constexpr inline const Buffer& getVBO() const {return m_VBO;}
-    constexpr inline const Buffer& getEBO() const {return m_EBO;}
+    constexpr inline const VertexArray& getVAO() const { return m_VAO; }
+    constexpr inline const Buffer& getVBO() const { return m_VBO; }
+    constexpr inline const Buffer& getEBO() const { return m_EBO; }
 private:
     VertexArray m_VAO;
     Buffer m_VBO;

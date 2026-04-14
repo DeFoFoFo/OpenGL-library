@@ -8,7 +8,8 @@
 #include <sstream>
 
 mylib::ComputeShader::ComputeShader()
-{}
+{
+}
 
 // Expects a filepath to the compute shader
 mylib::ComputeShader::ComputeShader(std::string filePath)
@@ -16,14 +17,14 @@ mylib::ComputeShader::ComputeShader(std::string filePath)
     assign(filePath);
 }
 
-mylib::ComputeShader::ComputeShader(ComputeShader &&other) noexcept
-    : m_ID{other.m_ID}, m_uniforms{other.m_uniforms}
+mylib::ComputeShader::ComputeShader(ComputeShader&& other) noexcept
+    : m_ID{ other.m_ID }, m_uniforms{ other.m_uniforms }
 {
     other.m_ID = 0;
     other.m_uniforms.clear();
 }
 
-mylib::ComputeShader &mylib::ComputeShader::operator=(ComputeShader &&other) noexcept
+mylib::ComputeShader& mylib::ComputeShader::operator=(ComputeShader&& other) noexcept
 {
     if (this != &other)
     {
@@ -47,13 +48,13 @@ mylib::ComputeShader::~ComputeShader()
 // Expects a filepath to the compute shader
 void mylib::ComputeShader::assign(std::string filePath)
 {
-    if (!MIN_OPENGL_VERSION(4,3))
+    if (!MIN_OPENGL_VERSION(4, 3))
     {
         std::cerr << "MYLIB::ERROR::COMPUTE_SHADER::ASSIGN::OPENGL_VERSION_LESS_THAN_4.3\tCURRENT: " << OPENGL_VERSION_MAJOR << "." << OPENGL_VERSION_MINOR << std::endl;
     }
 
-    std::string code{readFile(filePath)};
-    
+    std::string code{ readFile(filePath) };
+
     const char* sourceCode = code.c_str();
     GLuint compute = glCreateShader(GL_COMPUTE_SHADER);
     glShaderSource(compute, 1, &sourceCode, NULL);
@@ -78,7 +79,7 @@ void mylib::ComputeShader::dispatch(uint32_t x, uint32_t y, uint32_t z) const
 // Reads a file and returns its content
 std::string mylib::ComputeShader::readFile(std::string filePath)
 {
-    std::ifstream file{filePath};
+    std::ifstream file{ filePath };
     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     if (file)
@@ -124,14 +125,14 @@ GLint mylib::ComputeShader::getUniformLocation(std::string name)
     auto it = m_uniforms.find(name);
     if (it != m_uniforms.end())
         return it->second;
-    
+
     GLint location = glGetUniformLocation(m_ID, name.c_str());
 #if DEBUG == true
     if (location == -1)
         std::cerr << "MYLIB::ERROR::COMPUTE_SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
 #endif
 
-    m_uniforms.insert({name, location});
+    m_uniforms.insert({ name, location });
     return location;
 }
 

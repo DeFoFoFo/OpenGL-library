@@ -23,12 +23,12 @@ public:
     void createWindow(const int32_t width, const int32_t height, const std::string_view name, bool fullscreen = false);
     void setFullScreen(bool state);
 
-    inline void setCurrentContext() {glfwMakeContextCurrent(m_handle);}
+    inline void setCurrentContext() { glfwMakeContextCurrent(m_handle); }
 
-    constexpr inline GLFWwindow* getHandle() const {return m_handle;}
-    constexpr inline std::string getName() const {return m_name;}
-    constexpr inline int32_t getWidth() const {return m_width;}
-    constexpr inline int32_t getHeight() const {return m_height;}
+    constexpr inline GLFWwindow* getHandle() const { return m_handle; }
+    constexpr inline std::string getName() const { return m_name; }
+    constexpr inline int32_t getWidth() const { return m_width; }
+    constexpr inline int32_t getHeight() const { return m_height; }
 private:
     GLFWwindow* m_handle;
     std::string m_name;

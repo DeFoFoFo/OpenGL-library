@@ -20,7 +20,7 @@ enum class TextureDimension : GLenum
 {
     DIM1 = GL_TEXTURE_1D,
     DIM2 = GL_TEXTURE_2D,
-    // DIM3 = GL_TEXTURE_3D,  // Currently not supported
+    DIM3 = GL_TEXTURE_3D,   // Currently not supported
 };
 
 enum class Wrap : GLenum
@@ -29,18 +29,18 @@ enum class Wrap : GLenum
     WRAP_X = GL_TEXTURE_WRAP_R,   // Wrap the texture in the x dimension
     WRAP_S = GL_TEXTURE_WRAP_S,   // Wrap the texture in the y dimension
     WRAP_Y = GL_TEXTURE_WRAP_S,   // Wrap the texture in the y dimension
-    // WRAP_T = GL_TEXTURE_WRAP_T,   // Wrap the texture in the z dimension
-    // WRAP_Z = GL_TEXTURE_WRAP_T,   // Wrap the texture in the z dimension
+    WRAP_T = GL_TEXTURE_WRAP_T,   // Wrap the texture in the z dimension
+    WRAP_Z = GL_TEXTURE_WRAP_T,   // Wrap the texture in the z dimension
 };
 
 enum class WrapParam : GLenum
 {
-    CLAMP_TO_BORDER        = GL_CLAMP_TO_BORDER,         // Clamps the texture to the border (if specified)
-    CLAMP_TO_EDGE          = GL_CLAMP_TO_EDGE,           // Clamps to the edge of the surface
-    REPEAT                 = GL_REPEAT,                  // Repeats the texture
-    MIRRORED_REPEAT        = GL_MIRRORED_REPEAT,         // Repeats the texture but inverts its direction
+    CLAMP_TO_BORDER        = GL_CLAMP_TO_BORDER,      // Clamps the texture to the border (if specified)
+    CLAMP_TO_EDGE          = GL_CLAMP_TO_EDGE,        // Clamps to the edge of the surface
+    REPEAT                 = GL_REPEAT,               // Repeats the texture
+    MIRRORED_REPEAT        = GL_MIRRORED_REPEAT,      // Repeats the texture but inverts its direction
 #if MIN_OPENGL_VERSION(4,4)
-    MIRRORED_CLAMP_TO_EDGE = GL_MIRROR_CLAMP_TO_EDGE     // Avoids artifacts when CLAMP_TO_EDGE samples near a border
+    MIRRORED_CLAMP_TO_EDGE = GL_MIRROR_CLAMP_TO_EDGE  // Avoids artifacts when CLAMP_TO_EDGE samples near a border
 #endif
 };
 
@@ -75,11 +75,11 @@ private:
     GLuint m_ID;
     GLenum m_dimension = GL_TEXTURE_2D;
 
-    constexpr inline GLenum toGL(Wrap param)              {return static_cast<GLenum>(param);}
-    constexpr inline GLenum toGL(WrapParam param)         {return static_cast<GLenum>(param);}
-    constexpr inline GLenum toGL(MinMagFilter param)      {return static_cast<GLenum>(param);}
-    constexpr inline GLenum toGL(MinMagFilterParam param) {return static_cast<GLenum>(param);}
-    constexpr inline GLenum toGL(TextureDimension param)  {return static_cast<GLenum>(param);}
+    constexpr inline GLenum toGL(Wrap param) { return static_cast<GLenum>(param); }
+    constexpr inline GLenum toGL(WrapParam param) { return static_cast<GLenum>(param); }
+    constexpr inline GLenum toGL(MinMagFilter param) { return static_cast<GLenum>(param); }
+    constexpr inline GLenum toGL(MinMagFilterParam param) { return static_cast<GLenum>(param); }
+    constexpr inline GLenum toGL(TextureDimension param) { return static_cast<GLenum>(param); }
 };
 
 class Texture
@@ -100,15 +100,15 @@ public:
     void bind(uint16_t slot = 0) const;
     void unbind() const;
 
-    constexpr inline GLuint ID() const {return m_ID;}
-    constexpr inline TextureType getTypeName() const {return m_typeName;}
-    inline void setTypeName(TextureType type) {m_typeName = type;}
+    constexpr inline GLuint ID() const { return m_ID; }
+    constexpr inline TextureType getTypeName() const { return m_typeName; }
+    inline void setTypeName(TextureType type) { m_typeName = type; }
 private:
     GLuint m_ID;
     GLenum m_dimension = GL_TEXTURE_2D;
     TextureType m_typeName; // ex: diffuse, specular, emission
 
-    constexpr inline GLenum toGL(TextureDimension param) {return static_cast<GLenum>(param);}
+    constexpr inline GLenum toGL(TextureDimension param) { return static_cast<GLenum>(param); }
 };
 
 } // namespace mylib

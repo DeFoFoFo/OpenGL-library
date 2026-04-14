@@ -13,6 +13,7 @@ struct Boid
     glm::mat4 model;
 
     Boid(glm::vec3 pos, glm::vec3 velocity)
-        : position{pos}, velocity{velocity}, acceleration{glm::vec3(0.0f)}, model{glm::mat4(1.0f)}
-    {}
+        : position{ pos }, velocity{ velocity }, acceleration{ glm::vec3(0.0f) }, model{ glm::mat4(1.0f) }
+    {
+    }
 };

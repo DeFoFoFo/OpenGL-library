@@ -1,5 +1,7 @@
 #include "Defines.hpp"
+#include "Application.hpp"
 #include "Window.hpp"
+#include "InputManager.hpp"
 #include "Texture.hpp"
 #include "Shader.hpp"
 #include "ComputeShader.hpp"

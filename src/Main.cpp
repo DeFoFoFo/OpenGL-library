@@ -18,11 +18,11 @@ constexpr uint32_t BOX_SIZE = 500;
 
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
-void processInput(GLFWwindow* window);
 
+void processInput(mylib::InputManager* inputManager);
 int randomNumberWithin(int min, int max);
 
-mylib::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
+mylib::Camera camera{ glm::vec3(0.0f, 0.0f, 10.0f) };
 float lastX = WIN_WIDTH / 2;
 float lastY = WIN_HEIGHT / 2;
 bool firstMouse = true;
@@ -32,9 +32,13 @@ float lastTime{};
 
 int main()
 {
-    glfwInit();
-    mylib::Window window{WIN_WIDTH, WIN_HEIGHT, "Boids"};
-    
+    mylib::Application app;
+    mylib::Window& window = app.getWindow();
+    window.createWindow(WIN_WIDTH, WIN_HEIGHT, "Boids");
+    glfwSetWindowPos(app.getWindow().getHandle(), 0, 50);
+    mylib::InputManager& inputManager = app.getInputManager();
+    inputManager.connectWindow(&window);
+
     glfwSetCursorPosCallback(window.getHandle(), mouseCallback);
     glfwSetScrollCallback(window.getHandle(), scrollCallback);
 
@@ -42,7 +46,7 @@ int main()
 
     glfwSwapInterval(1);
 
-    mylib::Sampler sampler2D{mylib::TextureDimension::DIM2};
+    mylib::Sampler sampler2D{ mylib::TextureDimension::DIM2 };
     sampler2D.addWrapParameter(mylib::Wrap::WRAP_R, mylib::WrapParam::REPEAT);
     sampler2D.addWrapParameter(mylib::Wrap::WRAP_S, mylib::WrapParam::REPEAT);
     sampler2D.addMagParameter(mylib::MinMagFilter::MAG, mylib::MinMagFilterParam::NEAREST);
@@ -56,13 +60,13 @@ int main()
     }
 
     camera.setSpeed(20.0f);
-    
-    mylib::ComputeShader compBoid{"src/shaders/boid.comp"};
-    mylib::Shader boidShader{"src/shaders/fish.vert", "src/shaders/boid.frag"};
 
-    mylib::Shader cubeShader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
+    mylib::ComputeShader compBoid{ "src/shaders/boid.comp" };
+    mylib::Shader boidShader{ "src/shaders/fish.vert", "src/shaders/boid.frag" };
 
-    mylib::Model bird{"assets/Clown_fish.glb"};
+    mylib::Shader cubeShader{ "src/shaders/cube.vert", "src/shaders/cube.frag" };
+
+    mylib::Model bird{ "assets/Clown_fish.glb" };
 
     const float radiusOfInfluence = 15.0f;
     const float radiusOfSeparation = 10.0f;
@@ -70,18 +74,18 @@ int main()
     const float minSpeed = 3.0f;
     const float maxForce = 10.0f;
 
-    uint32_t numBoids{30000};
+    uint32_t numBoids{ 30000 };
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
     {
-        float xPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
-        float yPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
-        float zPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
+        float xPos{ (float)randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float yPos{ (float)randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float zPos{ (float)randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
 
-        float xVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
-        float yVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
-        float zVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
+        float xVelocity{ (float)randomNumberWithin(-maxSpeed, maxSpeed) };
+        float yVelocity{ (float)randomNumberWithin(-maxSpeed, maxSpeed) };
+        float zVelocity{ (float)randomNumberWithin(-maxSpeed, maxSpeed) };
 
         boids.emplace_back(
             glm::vec3(xPos, yPos, zPos),
@@ -109,7 +113,7 @@ int main()
 
     const GLuint LOCAL_SIZE = 256;
 
-    GLfloat vertices[]  = {
+    GLfloat vertices[] = {
          1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   // v0,v1,v2,v3 (front)
          1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f,   1.0f, 1.0f,-1.0f,   // v0,v3,v4,v5 (right)
          1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,  -1.0f, 1.0f, 1.0f,   // v0,v5,v6,v1 (top)
@@ -143,7 +147,7 @@ int main()
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
     cubeShader.bind();
     cubeShader.setUniform(color, "uColor");
-    
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -159,7 +163,7 @@ int main()
         lastTime = time;
         // std::cout << 1/dT << " " << dT * 1000 << std::endl;
 
-        processInput(window.getHandle());
+        processInput(&inputManager);
 
         glCullFace(GL_FRONT);
 
@@ -178,8 +182,8 @@ int main()
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);
-        
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
+
         // Model is computed inside compute shader
         boidShader.bind();
         boidShader.setUniform(view, "view");
@@ -187,7 +191,7 @@ int main()
         boidShader.setUniform(time, "time");
 
         const std::vector<mylib::Mesh>& birdMeshes = bird.getMeshes();
-        
+
         for (const auto& mesh : birdMeshes)
         {
             mesh.getVAO();
@@ -196,9 +200,9 @@ int main()
         }
 
         renderer.drawInstanced(bird, numBoids, boidShader);
-        
+
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(BOX_SIZE/2));
+        model = glm::scale(model, glm::vec3(BOX_SIZE / 2));
 
         cubeShader.bind();
         cubeShader.setUniform(model, "model");
@@ -212,75 +216,72 @@ int main()
         else  // Outside the cube
             glCullFace(GL_BACK);
 
-        renderer.drawIndexed(cubeVAO, 36, cubeShader, mylib::Primitive::TRIANGLES);
+        renderer.drawIndexed(cubeVAO, 36, cubeShader);
 
         glfwSwapBuffers(window.getHandle());
         glfwPollEvents();
     }
-
-    glfwDestroyWindow(window.getHandle());
-    glfwTerminate();
 }
 
 void mouseCallback(GLFWwindow* window, double xPosIn, double yPosIn)
 {
-	float xPos = static_cast<float>(xPosIn);
-	float yPos = static_cast<float>(yPosIn);
+    float xPos = static_cast<float>(xPosIn);
+    float yPos = static_cast<float>(yPosIn);
 
-	if (firstMouse)
+    if (firstMouse)
     {
-		lastX = xPos;
-		lastY = yPos;
-		firstMouse = false;
-	}
+        lastX = xPos;
+        lastY = yPos;
+        firstMouse = false;
+    }
 
-	float xOffset = xPos - lastX;
-	float yOffset = lastY - yPos; // y coordinates are reversed
+    float xOffset = xPos - lastX;
+    float yOffset = lastY - yPos; // y coordinates are reversed
 
-	lastX = xPos;
-	lastY = yPos;
+    lastX = xPos;
+    lastY = yPos;
 
-	camera.processMouse(xOffset, yOffset);
+    camera.processMouse(xOffset, yOffset);
 }
 
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 {
-	camera.processScroll(yOffset);
+    camera.processScroll(yOffset);
 }
 
-void processInput(GLFWwindow* window)
+void processInput(mylib::InputManager* inputManager)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-		glfwSetWindowShouldClose(window, true);
-	}
-
     using namespace mylib;
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (inputManager->isJustPressed(Key::ESCAPE))
     {
-		camera.processKeyboard(CameraMovement::FORWARD, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        glfwSetWindowShouldClose(inputManager->getWindow()->getHandle(), true);
+    }
+
+    if (inputManager->isPressed(Key::W))
     {
-		camera.processKeyboard(CameraMovement::BACKWARDS, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.processKeyboard(CameraMovement::FORWARD, dT);
+    }
+    if (inputManager->isPressed(Key::S))
     {
-		camera.processKeyboard(CameraMovement::LEFT, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.processKeyboard(CameraMovement::BACKWARD, dT);
+    }
+    if (inputManager->isPressed(Key::A))
     {
-		camera.processKeyboard(CameraMovement::RIGHT, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.processKeyboard(CameraMovement::LEFT, dT);
+    }
+    if (inputManager->isPressed(Key::D))
     {
-		camera.processKeyboard(CameraMovement::UP, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.processKeyboard(CameraMovement::RIGHT, dT);
+    }
+    if (inputManager->isPressed(Key::SPACE))
     {
-		camera.processKeyboard(CameraMovement::DOWN, dT);
-	}
+        camera.processKeyboard(CameraMovement::UP, dT);
+    }
+    if (inputManager->isPressed(Key::LEFT_SHIFT))
+    {
+        camera.processKeyboard(CameraMovement::DOWN, dT);
+    }
 
     // if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS)
     // {
@@ -298,7 +299,7 @@ void processInput(GLFWwindow* window)
 int randomNumberWithin(int min, int max)
 {
     if (max < min)
-        std::swap(min,max);
+        std::swap(min, max);
 
     int range = max - min + 1;
     int rnd = rand() % range;

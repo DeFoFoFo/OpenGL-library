@@ -11,7 +11,7 @@ mylib::Texture::Texture()
     glGenTextures(1, &m_ID);
 }
 
-mylib::Texture::Texture(TextureDimension dimension, const char *filePath, bool flip)
+mylib::Texture::Texture(TextureDimension dimension, const char* filePath, bool flip)
 {
     glGenTextures(1, &m_ID);
     loadTexture(dimension, filePath, flip);
@@ -23,13 +23,13 @@ mylib::Texture::~Texture()
         glDeleteTextures(1, &m_ID);
 }
 
-mylib::Texture::Texture(Texture &&other) noexcept
+mylib::Texture::Texture(Texture&& other) noexcept
     : m_ID(other.m_ID), m_dimension(other.m_dimension), m_typeName(other.m_typeName)
 {
     other.m_ID = 0;
 }
 
-mylib::Texture &mylib::Texture::operator=(Texture &&other) noexcept
+mylib::Texture& mylib::Texture::operator=(Texture&& other) noexcept
 {
     if (this != &other) {
         if (m_ID) glDeleteTextures(1, &m_ID);
@@ -41,7 +41,7 @@ mylib::Texture &mylib::Texture::operator=(Texture &&other) noexcept
     return *this;
 }
 
-void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePath, bool flip)
+void mylib::Texture::loadTexture(TextureDimension dimension, const char* filePath, bool flip)
 {
 #ifdef MYLIB_DEBUG
     double startTime = glfwGetTime();
@@ -52,7 +52,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
     bind();
 
     stbi_set_flip_vertically_on_load(flip);
-    
+
     int width, height, nrChannels;
     unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 4);
 
@@ -67,16 +67,16 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
 
         switch (m_dimension)
         {
-            case GL_TEXTURE_1D:
-            {
-                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-                break;
-            }
-            case GL_TEXTURE_2D:
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-                break;
-            }
+        case GL_TEXTURE_1D:
+        {
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            break;
+        }
+        case GL_TEXTURE_2D:
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            break;
+        }
         }
         glGenerateMipmap(m_dimension);
 
@@ -93,7 +93,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
 #endif
 }
 
-void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data, size_t size)
+void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char* data, size_t size)
 {
 #ifdef MYLIB_DEBUG
     double startTime = glfwGetTime();
@@ -115,16 +115,16 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data
 
         switch (m_dimension)
         {
-            case GL_TEXTURE_1D:
-            {
-                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
-                break;
-            }
-            case GL_TEXTURE_2D:
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
-                break;
-            }
+        case GL_TEXTURE_1D:
+        {
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
+            break;
+        }
+        case GL_TEXTURE_2D:
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
+            break;
+        }
         }
         glGenerateMipmap(m_dimension);
 
@@ -141,7 +141,7 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data
 #endif
 }
 
-void mylib::Texture::loadTexture(TextureDimension dimension, int width, int height, unsigned char *data, GLenum format)
+void mylib::Texture::loadTexture(TextureDimension dimension, int width, int height, unsigned char* data, GLenum format)
 {
 #ifdef MYLIB_DEBUG
     double startTime = glfwGetTime();
@@ -162,16 +162,16 @@ void mylib::Texture::loadTexture(TextureDimension dimension, int width, int heig
 
     switch (m_dimension)
     {
-        case GL_TEXTURE_1D:
-        {
-            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, format, GL_UNSIGNED_BYTE, data);
-            break;
-        }
-        case GL_TEXTURE_2D:
-        {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            break;
-        }
+    case GL_TEXTURE_1D:
+    {
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, format, GL_UNSIGNED_BYTE, data);
+        break;
+    }
+    case GL_TEXTURE_2D:
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        break;
+    }
     }
     glGenerateMipmap(m_dimension);
 
@@ -195,7 +195,7 @@ void mylib::Texture::unbind() const
 }
 
 mylib::Sampler::Sampler(TextureDimension dimension)
-    : m_dimension{toGL(dimension)}
+    : m_dimension{ toGL(dimension) }
 {
     glGenSamplers(1, &m_ID);
 }

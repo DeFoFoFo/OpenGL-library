@@ -1,7 +1,7 @@
 #include "Camera.hpp"
 
 mylib::Camera::Camera(glm::vec3 pos, glm::vec3 up, float sensitivity, float zoom, float speed, float yaw, float pitch)
-    : m_front{glm::vec3(0.0f, 0.0f, -1.0f)}, m_right{glm::vec3(1.0f, 0.0f, 0.0f)}
+    : m_front{ glm::vec3(0.0f, 0.0f, -1.0f) }, m_right{ glm::vec3(1.0f, 0.0f, 0.0f) }
 {
     m_pos = pos;
     m_up = up;
@@ -21,7 +21,7 @@ void mylib::Camera::updateCameraVectors()
     direction.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
     direction.y = sin(glm::radians(m_pitch));
     direction.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-    
+
     m_front = glm::normalize(direction);
     m_right = glm::normalize(glm::cross(m_front, mylib::WORLD_UP));
     m_up = glm::normalize(glm::cross(m_right, m_front));
@@ -34,10 +34,10 @@ void mylib::Camera::processKeyboard(mylib::CameraMovement direction, float delta
 
     using namespace mylib;
     float velocity = m_speed * deltaTime;
-    
+
     if (direction == CameraMovement::FORWARD)
         m_pos += velocity * m_front;
-    if (direction == CameraMovement::BACKWARDS)
+    if (direction == CameraMovement::BACKWARD)
         m_pos -= velocity * m_front;
     if (direction == CameraMovement::RIGHT)
         m_pos += velocity * m_right;
@@ -55,7 +55,7 @@ void mylib::Camera::processMouse(double xOffset, double yOffset, bool constrainP
 {
     if (!m_allowCameraMovement)
         return;
-    
+
     xOffset *= m_sensitivity;
     yOffset *= m_sensitivity;
 

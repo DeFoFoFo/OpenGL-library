@@ -20,7 +20,7 @@ public:
     void bind() const;
     void unbind() const;
 
-    constexpr inline GLuint ID() const {return m_ID;}
+    constexpr inline GLuint ID() const { return m_ID; }
 private:
     GLuint m_ID;
 };
