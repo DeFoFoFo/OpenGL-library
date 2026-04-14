@@ -32,9 +32,9 @@ void main()
     vec3 pos = vPos;
 
     float baseMovement = 3.0f;
-    float speed = length(boid.velocity);
+    float accelerationMovement = length(boid.acceleration);
     float amplitude = 0.2f;
-    pos.x += amplitude * cos(time * (baseMovement + speed) + pos.z + idx/20);
+    pos.x += amplitude * cos(time * (baseMovement + accelerationMovement) + pos.z + idx/20);
 
     gl_Position = projection * view * boid.model * vec4(pos, 1.0f);
 

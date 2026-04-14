@@ -37,7 +37,7 @@ void main() {
     vec3 pos = boid.position;
     vec3 velocity = boid.velocity;
 
-    float neighbours = 0;
+    float neighbourWeightSum = 0.0f;
 
     vec3 cohesionForce = vec3(0.0f);
     vec3 alignmentForce = vec3(0.0f);
@@ -47,7 +47,9 @@ void main() {
     float cohesionWeight = 10.0f;
     float alignmentWeight = 20.0f;
     float separationWeight = 100.0f;
-    float avoidanceWeight = 1.0f;
+    float avoidanceWeight = 10.0f;
+
+    float box = float(boxSize);
 
     for (uint i = 0; i < inBoids.length(); ++i)
     {
@@ -55,32 +57,62 @@ void main() {
         if (i == idx)
             continue;
 
-        // Skip if the distance between the two boids is greater than the view radius
         Boid otherBoid = inBoids[i];
         vec3 dirToOtherBoid = otherBoid.position - pos;
 
         float dist = length(dirToOtherBoid);
 
-        // If true, the other boid is too far
-        if (dist > radiusOfInfluence)
+        float neighbourWeight = clamp(1.0f - dist / radiusOfInfluence, 0.0f, 1.0f);
+        if (neighbourWeight <= 0.0f)
             continue;
 
-        // If we are too close we only apply a separation force
-        if (dist < radiusOfSeparation) {
-            separationForce -= dirToOtherBoid / (dist * dist);
-            continue;
+        neighbourWeightSum += neighbourWeight;
+        cohesionForce += dirToOtherBoid * neighbourWeight;
+        alignmentForce += otherBoid.velocity * neighbourWeight;
+
+        if (dist < radiusOfSeparation)
+        {
+            float separationStrength = (radiusOfSeparation - dist) / radiusOfSeparation;
+            if (dist > 1e-5)
+            {
+                separationForce += -normalize(dirToOtherBoid) * separationStrength;
+            }
+            else
+            {
+                separationForce += -vec3(1.0, 0.0, 0.0) * separationStrength;
+            }
         }
-        
-        // If we are here, the other boid is a neighbour
-        neighbours++;
-        
-        cohesionForce += otherBoid.position - pos;
-        alignmentForce += otherBoid.velocity;
     }
-    if (neighbours != 0)
+    if (neighbourWeightSum > 0.0f)
     {
-        cohesionForce /= neighbours;
-        alignmentForce /= neighbours;
+        cohesionForce /= neighbourWeightSum;
+        alignmentForce /= neighbourWeightSum;
+    }
+
+    float avoidanceDistance = boxSize / 2 - boxSize / 2 * 0.2;
+    if (pos.x > avoidanceDistance)
+    {
+        avoidanceForce += vec3(-1.0f, 0.0f, 0.0f) * (pos.x + avoidanceDistance);
+    } 
+    else if (pos.x < -avoidanceDistance)
+    {
+        avoidanceForce += vec3(1.0f, 0.0f, 0.0f) * (pos.x - avoidanceDistance);
+    }
+    if (pos.y > avoidanceDistance)
+    {
+        avoidanceForce += vec3(0.0f, -1.0f, 0.0f) * (pos.y + avoidanceDistance);
+    }
+    else if (pos.y < -avoidanceDistance)
+    {
+        avoidanceForce += vec3(0.0f, 1.0f, 0.0f) * (pos.y - avoidanceDistance);
+    }
+    if (pos.z > avoidanceDistance)
+    {
+        avoidanceForce += vec3(0.0f, 0.0f, -1.0f) * (pos.z + avoidanceDistance);
+    }
+    else if (pos.z < -avoidanceDistance)
+    {
+        avoidanceForce += vec3(0.0f, 0.0f, 1.0f) * (pos.z - avoidanceDistance);
     }
 
     vec3 desiredVelocity = cohesionForce * cohesionWeight 
@@ -131,5 +163,6 @@ void main() {
 
     outBoids[idx].position = pos;
     outBoids[idx].velocity = velocity;
+    outBoids[idx].acceleration = acceleration;
     outBoids[idx].model = model;
 }

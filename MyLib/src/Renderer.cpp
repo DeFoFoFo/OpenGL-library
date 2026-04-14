@@ -17,6 +17,14 @@ void mylib::Renderer::draw(const mylib::VertexArray &VAO, GLuint count, const Sh
     glDrawArrays(toGL(primitive), 0, count);
 }
 
+void mylib::Renderer::drawIndexed(const mylib::VertexArray &VAO, GLuint count, const Shader &shader, Primitive primitive) const
+{
+    shader.bind();
+
+    VAO.bind();
+    glDrawElements(toGL(primitive), count, GL_UNSIGNED_INT, 0);
+}
+
 static void setUpMeshDraw(const mylib::Mesh &mesh, const mylib::Shader &shader)
 {
     shader.bind();

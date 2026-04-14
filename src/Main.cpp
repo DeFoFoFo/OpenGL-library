@@ -14,7 +14,7 @@
 
 constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
-constexpr uint32_t boxSize = 200;
+constexpr uint32_t BOX_SIZE = 500;
 
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
@@ -40,7 +40,7 @@ int main()
 
     glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     mylib::Sampler sampler2D{mylib::TextureDimension::DIM2};
     sampler2D.addWrapParameter(mylib::Wrap::WRAP_R, mylib::WrapParam::REPEAT);
@@ -65,19 +65,19 @@ int main()
     mylib::Model bird{"assets/Clown_fish.glb"};
 
     const float radiusOfInfluence = 15.0f;
-    const float radiusOfSeparation = 5.0f;
+    const float radiusOfSeparation = 10.0f;
     const float maxSpeed = 15.0f;
     const float minSpeed = 3.0f;
-    const float maxForce = 30.0f;
+    const float maxForce = 10.0f;
 
-    uint32_t numBoids{5000};
+    uint32_t numBoids{30000};
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
     {
-        float xPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
-        float yPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
-        float zPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
+        float xPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
+        float yPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
+        float zPos{(float)randomNumberWithin(-BOX_SIZE/2, BOX_SIZE/2)};
 
         float xVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
         float yVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
@@ -99,30 +99,31 @@ int main()
     int readIdx = 0;
     int writeIdx = 1;
 
+    compBoid.bind();
     compBoid.setUniform(radiusOfInfluence, "radiusOfInfluence");
     compBoid.setUniform(radiusOfSeparation, "radiusOfSeparation");
     compBoid.setUniform(maxSpeed, "maxSpeed");
     compBoid.setUniform(minSpeed, "minSpeed");
     compBoid.setUniform(maxForce, "maxForce");
-    compBoid.setUniform(boxSize, "boxSize");
+    compBoid.setUniform(BOX_SIZE, "boxSize");
 
     const GLuint LOCAL_SIZE = 256;
 
     GLfloat vertices[]  = {
-        1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,  1.0f,-1.0f, 1.0f, // v0,v1,v2,v3 (front)
-        1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f,  1.0f, 1.0f,-1.0f, // v0,v3,v4,v5 (right)
-        1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,  -1.0f, 1.0f,-1.0f, -1.0f, 1.0f, 1.0f, // v0,v5,v6,v1 (top)
-        -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f,-1.0f, -1.0f,-1.0f,-1.0f, -1.0f,-1.0f, 1.0f, // v1,v6,v7,v2 (left)
-        -1.0f,-1.0f,-1.0f,   1.0f,-1.0f,-1.0f,  1.0f,-1.0f, 1.0f, -1.0f,-1.0f, 1.0f, // v7,v4,v3,v2 (bottom)
-        1.0f,-1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,  1.0f, 1.0f,-1.0f  // v4,v7,v6,v5 (back)
+         1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   // v0,v1,v2,v3 (front)
+         1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f,   1.0f, 1.0f,-1.0f,   // v0,v3,v4,v5 (right)
+         1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,  -1.0f, 1.0f, 1.0f,   // v0,v5,v6,v1 (top)
+        -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f,-1.0f, 1.0f,   // v1,v6,v7,v2 (left)
+        -1.0f,-1.0f,-1.0f,   1.0f,-1.0f,-1.0f,   1.0f,-1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,   // v7,v4,v3,v2 (bottom)
+         1.0f,-1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,   1.0f, 1.0f,-1.0f    // v4,v7,v6,v5 (back)
     };
     GLuint indices[] = {
-        0, 1, 2,   2, 3, 0,    // v0-v1-v2, v2-v3-v0 (front)
-        4, 5, 6,   6, 7, 4,    // v0-v3-v4, v4-v5-v0 (right)
-        8, 9,10,  10,11, 8,    // v0-v5-v6, v6-v1-v0 (top)
-        12,13,14,  14,15,12,    // v1-v6-v7, v7-v2-v1 (left)
-        16,17,18,  18,19,16,    // v7-v4-v3, v3-v2-v7 (bottom)
-        20,21,22,  22,23,20     // v4-v7-v6, v6-v5-v4 (back)
+         0,  1,  2,  2,  3,  0,   // v0-v1-v2, v2-v3-v0 (front)
+         4,  5,  6,  6,  7,  4,   // v0-v3-v4, v4-v5-v0 (right)
+         8,  9, 10, 10, 11,  8,   // v0-v5-v6, v6-v1-v0 (top)
+        12, 13, 14, 14, 15, 12,   // v1-v6-v7, v7-v2-v1 (left)
+        16, 17, 18, 18, 19, 16,   // v7-v4-v3, v3-v2-v7 (bottom)
+        20, 21, 22, 22, 23, 20    // v4-v7-v6, v6-v5-v4 (back)
     };
 
     mylib::VertexArray cubeVAO;
@@ -140,6 +141,7 @@ int main()
     cubeEBO.fill(mylib::BufferTarget::EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
+    cubeShader.bind();
     cubeShader.setUniform(color, "uColor");
     
     glEnable(GL_BLEND);
@@ -147,15 +149,19 @@ int main()
 
     mylib::Renderer renderer;
 
+    glEnable(GL_CULL_FACE);
+
     while (!glfwWindowShouldClose(window.getHandle()))
     {
         float time = (float)glfwGetTime();
         // If framerate is lower than 5 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
-        // std::cout << 1/dT << std::endl;
+        // std::cout << 1/dT << " " << dT * 1000 << std::endl;
 
         processInput(window.getHandle());
+
+        glCullFace(GL_FRONT);
 
         SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
         SSBO[writeIdx].bindBase(mylib::BufferTarget::SSBO, 1);
@@ -167,7 +173,7 @@ int main()
 
         std::swap(readIdx, writeIdx);
 
-        renderer.backgroundColor(0.1f, 0.1f, 0.1f, 1.0f);
+        renderer.backgroundColor(0.2f, 0.2f, 0.8f, 1.0f);
         renderer.clear();
 
         glm::mat4 model = glm::mat4(1.0f);
@@ -175,6 +181,7 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);
         
         // Model is computed inside compute shader
+        boidShader.bind();
         boidShader.setUniform(view, "view");
         boidShader.setUniform(projection, "projection");
         boidShader.setUniform(time, "time");
@@ -191,14 +198,21 @@ int main()
         renderer.drawInstanced(bird, numBoids, boidShader);
         
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(boxSize/2));
+        model = glm::scale(model, glm::vec3(BOX_SIZE/2));
 
+        cubeShader.bind();
         cubeShader.setUniform(model, "model");
         cubeShader.setUniform(view, "view");
         cubeShader.setUniform(projection, "projection");
 
-        cubeVAO.bind();
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        if (abs(camera.getPos().x) < static_cast<float>(BOX_SIZE) / 2 ||
+            abs(camera.getPos().y) < static_cast<float>(BOX_SIZE) / 2 ||
+            abs(camera.getPos().z) < static_cast<float>(BOX_SIZE) / 2)  // Inside the cube
+            glCullFace(GL_FRONT);
+        else  // Outside the cube
+            glCullFace(GL_BACK);
+
+        renderer.drawIndexed(cubeVAO, 36, cubeShader, mylib::Primitive::TRIANGLES);
 
         glfwSwapBuffers(window.getHandle());
         glfwPollEvents();
@@ -267,6 +281,18 @@ void processInput(GLFWwindow* window)
     {
 		camera.processKeyboard(CameraMovement::DOWN, dT);
 	}
+
+    // if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS)
+    // {
+    //     for (auto& shader : shaders)
+    //     {
+    //         shader.recompile();
+    //     }
+    //     for (auto& shader : computeShaders)
+    //     {
+    //         shader.recompile();
+    //     }
+    // }
 }
 
 int randomNumberWithin(int min, int max)

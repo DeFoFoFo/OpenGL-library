@@ -9,7 +9,7 @@ mylib::Window::Window()
 {}
 
 mylib::Window::Window(const int32_t width, const int32_t height, const std::string_view name, bool fullscreen)
-    : m_name{name}, m_width{width}, m_height{height}
+    : m_handle{nullptr}, m_name{name}, m_width{width}, m_height{height}
 {
     createWindow(width, height, name, fullscreen);
 }
@@ -151,14 +151,23 @@ void mylib::Window::setFullScreen(bool state)
 
 void mylib::Window::framebufferSizeCallback(GLFWwindow *window, int width, int height)
 {
-    glViewport(0, 0, width, height);
     Window* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+    // Stealing current context
+    Window* prevWindow = static_cast<Window*>(glfwGetWindowUserPointer(glfwGetCurrentContext()));
+    self->setCurrentContext();
+
+    glViewport(0, 0, width, height);
+
     if (self) {
         self->m_width = width;
         self->m_height = height;
     }
 
 #if DEBUG == true
-    std::cout << "Resized: " << self->m_width << " " << self->m_height << std::endl;
+    std::cout << "MYLIB::WINDOW::RESIZE: " << self->getName() << ": " << self->m_width << " " << self->m_height << std::endl;
 #endif
+
+    // Restore context
+    prevWindow->setCurrentContext();
 }
