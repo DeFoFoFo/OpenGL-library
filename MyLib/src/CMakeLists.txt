@@ -22,8 +22,10 @@ target_include_directories(mylib PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+find_package(OpenGL REQUIRED)
+
 target_link_libraries(mylib
-    PRIVATE opengl32
+    PRIVATE OpenGL::GL
     PUBLIC glad
     PUBLIC glfw
     PUBLIC stb
