@@ -14,7 +14,8 @@ mylib::Model::Model(const char* path)
 
 #ifdef MYLIB_DEBUG
     float loadTime = glfwGetTime() - startTime;
-    std::cout << "MYLIB::MODEL::LOADED_IN " << loadTime * 1000 << "ms\tPATH: " << path << std::endl;
+    std::cout << "MYLIB::MODEL::LOADED_IN " << loadTime * 1000 << "ms\n"
+        << "\tPATH: " << path << std::endl;
 #endif
 }
 

@@ -22,6 +22,8 @@ void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 void processInput(mylib::InputManager* inputManager);
 int randomNumberWithin(int min, int max);
 
+mylib::ShaderProgram boidShader;
+
 mylib::Camera camera{ glm::vec3(0.0f, 0.0f, 10.0f) };
 float lastX = WIN_WIDTH / 2;
 float lastY = WIN_HEIGHT / 2;
@@ -62,9 +64,12 @@ int main()
     camera.setSpeed(20.0f);
 
     mylib::ComputeShader compBoid{ "src/shaders/boid.comp" };
-    mylib::Shader boidShader{ "src/shaders/fish.vert", "src/shaders/boid.frag" };
+    boidShader.assign( "src/shaders/fish.vert", "src/shaders/boid.frag" );
 
-    mylib::Shader cubeShader{ "src/shaders/cube.vert", "src/shaders/cube.frag" };
+    mylib::ShaderProgram cubeShader{ "src/shaders/cube.vert", "src/shaders/cube.frag" };
+    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
+    cubeShader.bind();
+    cubeShader.setUniform(color, "uColor");
 
     mylib::Model bird{ "assets/Clown_fish.glb" };
 
@@ -143,10 +148,6 @@ int main()
     mylib::Buffer cubeEBO;
     cubeEBO.bindAs(mylib::BufferTarget::EBO);
     cubeEBO.fill(mylib::BufferTarget::EBO, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
-    cubeShader.bind();
-    cubeShader.setUniform(color, "uColor");
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -283,17 +284,8 @@ void processInput(mylib::InputManager* inputManager)
         camera.processKeyboard(CameraMovement::DOWN, dT);
     }
 
-    // if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS)
-    // {
-    //     for (auto& shader : shaders)
-    //     {
-    //         shader.recompile();
-    //     }
-    //     for (auto& shader : computeShaders)
-    //     {
-    //         shader.recompile();
-    //     }
-    // }
+    if (inputManager->isJustPressed(Key::F5))
+        boidShader.recompile();
 }
 
 int randomNumberWithin(int min, int max)

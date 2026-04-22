@@ -3,6 +3,7 @@ add_library(mylib STATIC)
 target_sources(mylib PRIVATE
     stb_image.cpp
     Shader.cpp
+    ShaderProgram.cpp
     ComputeShader.cpp
     Camera.cpp
     Texture.cpp

@@ -89,7 +89,8 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char* filePat
 
 #ifdef MYLIB_DEBUG
     double timeOfLoading = glfwGetTime() - startTime;
-    std::cout << "MYLIB::TEXTURE::LOADED_IN " << timeOfLoading * 1000 << "ms\tPATH: " << filePath << std::endl;
+    std::cout << "MYLIB::TEXTURE::LOADED_IN " << timeOfLoading * 1000 << "ms\n"
+        << "\tPATH: " << filePath << std::endl;
 #endif
 }
 
