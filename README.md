@@ -10,7 +10,7 @@ This library is built using cmake and gives a template program setup with **C++2
 
 **PLEASE NOTE THAT THE FOLLOWING COMMANDS ARE TO BUILD WITH MINGW, IF YOU ARE USING OTHER GENERATORS TYPE ```cmake -G --help``` AND CHOOSE THE APPROPRIATE GENERATOR**
 ```
-cmake -S . -B build -G "MinGW Makefiles"
+cmake -S . -B build
 cmake --build build
 ./build/myproject.exe
 ```
@@ -18,11 +18,11 @@ Right now it has only been used with MinGW (GCC) but should work with MSVC accor
 
 **If you want to have a debug context, replace**
 ```
-cmake -S . -B build -G "MinGW Makefiles"
+cmake -S . -B build
 ```
 **with**
 ```
-cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_CXX_FLAGS="-DMYLIB_DEBUG"
+cmake -S . -B build -D CMAKE_CXX_FLAGS="-D MYLIB_DEBUG"
 ```
 
 # Dependencies
