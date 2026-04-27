@@ -5,6 +5,7 @@
 #include "Defines.hpp"
 
 #include <cstdint>
+#include <cstddef>
 
 namespace mylib
 {
