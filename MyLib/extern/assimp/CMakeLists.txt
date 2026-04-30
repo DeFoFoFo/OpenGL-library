@@ -22,6 +22,8 @@ set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE) # turn ON if needed
 set(ASSIMP_BUILD_FBX_IMPORTER OFF CACHE BOOL "" FORCE)  # turn ON if needed
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+# Force assimp to use zlib for unzip.h
+set(ASSIMP_BUILD_ZLIB ON)
 
 # Make it available
 FetchContent_MakeAvailable(assimp)
