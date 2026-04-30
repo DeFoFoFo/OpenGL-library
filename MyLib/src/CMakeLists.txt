@@ -3,6 +3,7 @@ add_library(mylib STATIC)
 target_sources(mylib PRIVATE
     stb_image.cpp
     Shader.cpp
+    ShaderProgram.cpp
     ComputeShader.cpp
     Camera.cpp
     Texture.cpp
@@ -11,6 +12,9 @@ target_sources(mylib PRIVATE
     Buffer.cpp
     Mesh.cpp
     Model.cpp
+    Window.cpp
+    InputManager.cpp
+    Application.cpp
 )
 
 target_include_directories(mylib PUBLIC
@@ -19,8 +23,10 @@ target_include_directories(mylib PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+find_package(OpenGL REQUIRED)
+
 target_link_libraries(mylib
-    PRIVATE opengl32
+    PRIVATE OpenGL::GL
     PUBLIC glad
     PUBLIC glfw
     PUBLIC stb
@@ -29,7 +35,7 @@ target_link_libraries(mylib
 )
 
 target_compile_features(mylib PUBLIC
-    cxx_std_20
+    cxx_std_23
 )
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

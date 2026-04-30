@@ -4,15 +4,9 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-#include "Defines.hpp"
-#include "ComputeShader.hpp"
-#include "Shader.hpp"
-#include "Camera.hpp"
+#include "Mylib.hpp"
+
 #include "Boid.hpp"
-#include "Texture.hpp"
-#include "VertexArray.hpp"
-#include "Renderer.hpp"
-#include "Model.hpp"
 
 #include <iostream>
 #include <vector>
@@ -20,16 +14,16 @@
 
 constexpr uint32_t WIN_WIDTH = 1600;
 constexpr uint32_t WIN_HEIGHT = 1200;
-constexpr uint32_t boxSize = 200;
+constexpr uint32_t BOX_SIZE = 500;
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
-void processInput(GLFWwindow* window);
 
-int randomNumberWithin(int min, int max);
+void processInput(mylib::InputManager* inputManager);
 
-mylib::Camera camera{glm::vec3(0.0f, 0.0f, 10.0f)};
+mylib::ShaderProgram boidShader;
+
+mylib::Camera camera{ glm::vec3(0.0f, 0.0f, 10.0f) };
 float lastX = WIN_WIDTH / 2;
 float lastY = WIN_HEIGHT / 2;
 bool firstMouse = true;
@@ -39,34 +33,23 @@ float lastTime{};
 
 int main()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow* window = glfwCreateWindow(WIN_WIDTH, WIN_HEIGHT, "Test", NULL, NULL);
-    if (!window)
-    {
-        std::cerr << "Failed to create window" << std::endl;
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
+    mylib::Application app;
+    mylib::Window& window = app.getWindow();
+    window.createWindow(WIN_WIDTH, WIN_HEIGHT, "Boids");
+    glfwSetWindowPos(app.getWindow().getHandle(), 0, 50);
+    mylib::InputManager& inputManager = app.getInputManager();
+    inputManager.connectWindow(&window);
 
-    if (!gladLoadGL(glfwGetProcAddress))
-    {
-        std::cerr << "Failed to initialize glad" << std::endl;
-        return -1;
-    }
-    glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-    glfwSetCursorPosCallback(window, mouseCallback);
-    glfwSetScrollCallback(window, scrollCallback);
+    glfwSetCursorPosCallback(window.getHandle(), mouseCallback);
+    glfwSetScrollCallback(window.getHandle(), scrollCallback);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window.getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
-    mylib::Sampler sampler2D{mylib::TextureDimension::DIM2};
-    sampler2D.addWrapParameter(mylib::WrapDimension::WRAP_R, mylib::WrapParam::REPEAT);
-    sampler2D.addWrapParameter(mylib::WrapDimension::WRAP_S, mylib::WrapParam::REPEAT);
+    mylib::Sampler sampler2D{ mylib::TextureDimension::DIM2 };
+    sampler2D.addWrapParameter(mylib::Wrap::WRAP_R, mylib::WrapParam::REPEAT);
+    sampler2D.addWrapParameter(mylib::Wrap::WRAP_S, mylib::WrapParam::REPEAT);
     sampler2D.addMagParameter(mylib::MinMagFilter::MAG, mylib::MinMagFilterParam::NEAREST);
     sampler2D.addMagParameter(mylib::MinMagFilter::MIN, mylib::MinMagFilterParam::NEAREST);
     GLint maxUnits;
@@ -78,32 +61,35 @@ int main()
     }
 
     camera.setSpeed(20.0f);
-    
-    mylib::ComputeShader compBoid{"src/shaders/boid.glsl"};
-    mylib::Shader boidShader{"src/shaders/fish.vert", "src/shaders/boid.frag"};
 
-    mylib::Shader cubeShader{"src/shaders/cube.vert", "src/shaders/cube.frag"};
+    mylib::ComputeShader compBoid{ "src/shaders/boid.comp" };
+    boidShader.assign("src/shaders/fish.vert", "src/shaders/boid.frag");
 
-    mylib::Model bird{"assets/Clown_fish.glb"};
+    mylib::ShaderProgram cubeShader{ "src/shaders/cube.vert", "src/shaders/cube.frag" };
+    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
+    cubeShader.bind();
+    cubeShader.setUniform(color, "uColor");
 
-    const float radiusOfInfluence = 20.0f;
+    mylib::Model bird{ "assets/Clown_fish.glb" };
+
+    const float radiusOfInfluence = 15.0f;
     const float radiusOfSeparation = 10.0f;
-    const float maxSpeed = 25.0f;
-    const float minSpeed = 10.0f;
-    const float maxForce = 15.0f;
+    const float maxSpeed = 15.0f;
+    const float minSpeed = 3.0f;
+    const float maxForce = 10.0f;
 
-    uint32_t numBoids{10000};
+    uint32_t numBoids{ 30000 };
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
     {
-        float xPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
-        float yPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
-        float zPos{(float)randomNumberWithin(-boxSize/2, boxSize/2)};
+        float xPos{ (float)mylib::randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float yPos{ (float)mylib::randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float zPos{ (float)mylib::randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
 
-        float xVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
-        float yVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
-        float zVelocity{(float)randomNumberWithin(-maxSpeed, maxSpeed)};
+        float xVelocity{ (float)mylib::randomNumberWithin(-maxSpeed, maxSpeed) };
+        float yVelocity{ (float)mylib::randomNumberWithin(-maxSpeed, maxSpeed) };
+        float zVelocity{ (float)mylib::randomNumberWithin(-maxSpeed, maxSpeed) };
 
         boids.emplace_back(
             glm::vec3(xPos, yPos, zPos),
@@ -122,30 +108,30 @@ int main()
     int writeIdx = 1;
 
     compBoid.bind();
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfInfluence"), radiusOfInfluence);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "radiusOfSeparation"), radiusOfSeparation);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxSpeed"), maxSpeed);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "minSpeed"), minSpeed);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "maxForce"), maxForce);
-    glUniform1f(glGetUniformLocation(compBoid.getID(), "boxSize"), boxSize);
+    compBoid.setUniform(radiusOfInfluence, "radiusOfInfluence");
+    compBoid.setUniform(radiusOfSeparation, "radiusOfSeparation");
+    compBoid.setUniform(maxSpeed, "maxSpeed");
+    compBoid.setUniform(minSpeed, "minSpeed");
+    compBoid.setUniform(maxForce, "maxForce");
+    compBoid.setUniform(BOX_SIZE, "boxSize");
 
     const GLuint LOCAL_SIZE = 256;
 
-    GLfloat vertices[]  = {
-        1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,  1.0f,-1.0f, 1.0f, // v0,v1,v2,v3 (front)
-        1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f,  1.0f, 1.0f,-1.0f, // v0,v3,v4,v5 (right)
-        1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,  -1.0f, 1.0f,-1.0f, -1.0f, 1.0f, 1.0f, // v0,v5,v6,v1 (top)
-        -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f,-1.0f, -1.0f,-1.0f,-1.0f, -1.0f,-1.0f, 1.0f, // v1,v6,v7,v2 (left)
-        -1.0f,-1.0f,-1.0f,   1.0f,-1.0f,-1.0f,  1.0f,-1.0f, 1.0f, -1.0f,-1.0f, 1.0f, // v7,v4,v3,v2 (bottom)
-        1.0f,-1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,  1.0f, 1.0f,-1.0f  // v4,v7,v6,v5 (back)
+    GLfloat vertices[] = {
+         1.0f, 1.0f, 1.0f,  -1.0f, 1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   // v0,v1,v2,v3 (front)
+         1.0f, 1.0f, 1.0f,   1.0f,-1.0f, 1.0f,   1.0f,-1.0f,-1.0f,   1.0f, 1.0f,-1.0f,   // v0,v3,v4,v5 (right)
+         1.0f, 1.0f, 1.0f,   1.0f, 1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,  -1.0f, 1.0f, 1.0f,   // v0,v5,v6,v1 (top)
+        -1.0f, 1.0f, 1.0f,  -1.0f, 1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f,-1.0f, 1.0f,   // v1,v6,v7,v2 (left)
+        -1.0f,-1.0f,-1.0f,   1.0f,-1.0f,-1.0f,   1.0f,-1.0f, 1.0f,  -1.0f,-1.0f, 1.0f,   // v7,v4,v3,v2 (bottom)
+         1.0f,-1.0f,-1.0f,  -1.0f,-1.0f,-1.0f,  -1.0f, 1.0f,-1.0f,   1.0f, 1.0f,-1.0f    // v4,v7,v6,v5 (back)
     };
     GLuint indices[] = {
-        0, 1, 2,   2, 3, 0,    // v0-v1-v2, v2-v3-v0 (front)
-        4, 5, 6,   6, 7, 4,    // v0-v3-v4, v4-v5-v0 (right)
-        8, 9,10,  10,11, 8,    // v0-v5-v6, v6-v1-v0 (top)
-        12,13,14,  14,15,12,    // v1-v6-v7, v7-v2-v1 (left)
-        16,17,18,  18,19,16,    // v7-v4-v3, v3-v2-v7 (bottom)
-        20,21,22,  22,23,20     // v4-v7-v6, v6-v5-v4 (back)
+         0,  1,  2,  2,  3,  0,   // v0-v1-v2, v2-v3-v0 (front)
+         4,  5,  6,  6,  7,  4,   // v0-v3-v4, v4-v5-v0 (right)
+         8,  9, 10, 10, 11,  8,   // v0-v5-v6, v6-v1-v0 (top)
+        12, 13, 14, 14, 15, 12,   // v1-v6-v7, v7-v2-v1 (left)
+        16, 17, 18, 18, 19, 16,   // v7-v4-v3, v3-v2-v7 (bottom)
+        20, 21, 22, 22, 23, 20    // v4-v7-v6, v6-v5-v4 (back)
     };
 
     mylib::VertexArray cubeVAO;
@@ -162,51 +148,50 @@ int main()
     cubeEBO.bindAs(mylib::BufferTarget::EBO);
     cubeEBO.fill(mylib::BufferTarget::EBO, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
-    cubeShader.bind();
-    glUniform4fv(glGetUniformLocation(cubeShader.getID(), "uColor"), 1, glm::value_ptr(color));
-    
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     mylib::Renderer renderer;
 
-    while (!glfwWindowShouldClose(window))
+    glEnable(GL_CULL_FACE);
+
+    while (!glfwWindowShouldClose(window.getHandle()))
     {
         float time = (float)glfwGetTime();
         // If framerate is lower than 5 fps, clamp it to avoid stutters
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
-        std::cout << 1/dT << std::endl;
+        // std::cout << 1/dT << " " << dT * 1000 << std::endl;
 
-        processInput(window);
+        processInput(&inputManager);
+
+        glCullFace(GL_FRONT);
 
         SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
         SSBO[writeIdx].bindBase(mylib::BufferTarget::SSBO, 1);
 
         compBoid.bind();
-        glUniform1f(glGetUniformLocation(compBoid.getID(), "dT"), dT);
+        compBoid.setUniform(dT, "dT");
         compBoid.dispatch((numBoids + LOCAL_SIZE - 1) / LOCAL_SIZE, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+        compBoid.barrier(mylib::MemoryBarrier::SSBO);
 
         std::swap(readIdx, writeIdx);
 
-        renderer.backgroundColor(0.1f, 0.1f, 0.1f, 1.0f);
-        renderer.clear();
+        renderer.backgroundColor(0.2f, 0.2f, 0.8f, 1.0f);
+        renderer.clear(mylib::BufferBit::COLOR, mylib::BufferBit::DEPTH);
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH/WIN_HEIGHT, 0.1f, 1000.0f);        
+        glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (float)WIN_WIDTH / WIN_HEIGHT, 0.1f, 1000.0f);
 
-        boidShader.bind();
-        
         // Model is computed inside compute shader
-        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(boidShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniform1f(glGetUniformLocation(boidShader.getID(), "time"), time);
+        boidShader.bind();
+        boidShader.setUniform(view, "view");
+        boidShader.setUniform(projection, "projection");
+        boidShader.setUniform(time, "time");
 
         const std::vector<mylib::Mesh>& birdMeshes = bird.getMeshes();
-        
+
         for (const auto& mesh : birdMeshes)
         {
             mesh.getVAO();
@@ -215,99 +200,89 @@ int main()
         }
 
         renderer.drawInstanced(bird, numBoids, boidShader);
-        
+
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(boxSize/2));
+        model = glm::scale(model, glm::vec3(BOX_SIZE / 2));
 
         cubeShader.bind();
+        cubeShader.setUniform(model, "model");
+        cubeShader.setUniform(view, "view");
+        cubeShader.setUniform(projection, "projection");
 
-        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(cubeShader.getID(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        if (abs(camera.getPos().x) < static_cast<float>(BOX_SIZE) / 2 ||
+            abs(camera.getPos().y) < static_cast<float>(BOX_SIZE) / 2 ||
+            abs(camera.getPos().z) < static_cast<float>(BOX_SIZE) / 2)  // Inside the cube
+            glCullFace(GL_FRONT);
+        else  // Outside the cube
+            glCullFace(GL_BACK);
 
-        cubeVAO.bind();
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        renderer.drawIndexed(cubeVAO, 36, cubeShader);
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(window.getHandle());
         glfwPollEvents();
     }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-}
-
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
 }
 
 void mouseCallback(GLFWwindow* window, double xPosIn, double yPosIn)
 {
-	float xPos = static_cast<float>(xPosIn);
-	float yPos = static_cast<float>(yPosIn);
+    float xPos = static_cast<float>(xPosIn);
+    float yPos = static_cast<float>(yPosIn);
 
-	if (firstMouse)
+    if (firstMouse)
     {
-		lastX = xPos;
-		lastY = yPos;
-		firstMouse = false;
-	}
+        lastX = xPos;
+        lastY = yPos;
+        firstMouse = false;
+    }
 
-	float xOffset = xPos - lastX;
-	float yOffset = lastY - yPos; // y coordinates are reversed
+    float xOffset = xPos - lastX;
+    float yOffset = lastY - yPos; // y coordinates are reversed
 
-	lastX = xPos;
-	lastY = yPos;
+    lastX = xPos;
+    lastY = yPos;
 
-	camera.processMouse(xOffset, yOffset);
+    camera.processMouse(xOffset, yOffset);
 }
 
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset)
 {
-	camera.processScroll(yOffset);
+    camera.processScroll(yOffset);
 }
 
-void processInput(GLFWwindow* window)
+void processInput(mylib::InputManager* inputManager)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-		glfwSetWindowShouldClose(window, true);
-	}
-
     using namespace mylib;
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (inputManager->isJustPressed(Key::ESCAPE))
     {
-		camera.processKeyboard(CameraMovement::FORWARD, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-		camera.processKeyboard(CameraMovement::BACKWARDS, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-		camera.processKeyboard(CameraMovement::LEFT, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-		camera.processKeyboard(CameraMovement::RIGHT, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-    {
-		camera.processKeyboard(CameraMovement::UP, dT);
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    {
-		camera.processKeyboard(CameraMovement::DOWN, dT);
-	}
-}
+        glfwSetWindowShouldClose(inputManager->getWindow()->getHandle(), true);
+    }
 
-int randomNumberWithin(int min, int max)
-{
-    if (max < min)
-        std::swap(min,max);
+    if (inputManager->isPressed(Key::W))
+    {
+        camera.processKeyboard(CameraMovement::FORWARD, dT);
+    }
+    if (inputManager->isPressed(Key::S))
+    {
+        camera.processKeyboard(CameraMovement::BACKWARD, dT);
+    }
+    if (inputManager->isPressed(Key::A))
+    {
+        camera.processKeyboard(CameraMovement::LEFT, dT);
+    }
+    if (inputManager->isPressed(Key::D))
+    {
+        camera.processKeyboard(CameraMovement::RIGHT, dT);
+    }
+    if (inputManager->isPressed(Key::SPACE))
+    {
+        camera.processKeyboard(CameraMovement::UP, dT);
+    }
+    if (inputManager->isPressed(Key::LEFT_SHIFT))
+    {
+        camera.processKeyboard(CameraMovement::DOWN, dT);
+    }
 
-    int range = max - min + 1;
-    int rnd = rand() % range;
-    return min + rnd;
+    if (inputManager->isJustPressed(Key::F5))
+        boidShader.recompile();
 }

@@ -18,7 +18,7 @@ public:
     const std::vector<mylib::Mesh>& getMeshes() const;
 private:
     std::vector<Mesh> m_meshes;
-    std::string m_path;
+    std::string m_directory;
 
     void loadModel(std::string path);
     void processNode(const aiNode* node, const aiScene* scene);

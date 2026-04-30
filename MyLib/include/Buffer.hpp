@@ -9,19 +9,19 @@ namespace mylib
 
 enum class BufferTarget : GLenum
 {
-    VBO         = GL_ARRAY_BUFFER,
-    IBO         = GL_ELEMENT_ARRAY_BUFFER, // alias to EBO
-    EBO         = GL_ELEMENT_ARRAY_BUFFER, // alias to IBO
-    TEXTURE     = GL_TEXTURE_BUFFER,
-    QUERY       = GL_QUERY_BUFFER,
-    UBO         = GL_UNIFORM_BUFFER,
-    COPY        = GL_COPY_READ_BUFFER,
-    WRITE       = GL_COPY_WRITE_BUFFER,
+    VBO   = GL_ARRAY_BUFFER,           // Array buffer
+    IBO   = GL_ELEMENT_ARRAY_BUFFER,   // Element array buffer (alias to EBO)
+    EBO   = GL_ELEMENT_ARRAY_BUFFER,   // Element array buffer (alias to IBO)
+    TBO   = GL_TEXTURE_BUFFER,         // Texture buffer
+    QBO   = GL_QUERY_BUFFER,           // Query buffer
+    UBO   = GL_UNIFORM_BUFFER,         // Uniform buffer
+    READ  = GL_COPY_READ_BUFFER,       // Copy read buffer
+    WRITE = GL_COPY_WRITE_BUFFER,      // Copy write buffer
 #if MIN_OPENGL_VERSION(4,2)
-    ACB         = GL_ATOMIC_COUNTER_BUFFER,
+    ACBO  = GL_ATOMIC_COUNTER_BUFFER,  // Atomic counter buffer
 #endif
 #if MIN_OPENGL_VERSION(4,3)
-    SSBO        = GL_SHADER_STORAGE_BUFFER,
+    SSBO  = GL_SHADER_STORAGE_BUFFER,  // Shader storage buffer
 #endif
 };
 
@@ -39,16 +39,16 @@ public:
     void fill(const BufferTarget target, GLsizeiptr size, const void* data, GLenum usage);
     void update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void* data);
 
-    void bindAs(const BufferTarget target) const;
-    void unbindAs(const BufferTarget target) const;
-    void bindBase(const BufferTarget target, GLuint index) const;
+    inline void bindAs(const BufferTarget target) const { glBindBuffer(toGL(target), m_ID); }
+    inline void unbindAs(const BufferTarget target) const { glBindBuffer(toGL(target), 0); }
+    inline void bindBase(const BufferTarget target, GLuint index) const { glBindBufferBase(toGL(target), index, m_ID); }
 
-    GLuint ID() const;
+    constexpr inline GLuint ID() const { return m_ID; }
 private:
     GLuint m_ID = 0;
     GLuint m_size = 0;
 
-    constexpr GLenum toGL(BufferTarget target) const;
+    constexpr inline GLenum toGL(BufferTarget target) const { return static_cast<GLenum>(target); }
 };
 
 } // namespace mylib

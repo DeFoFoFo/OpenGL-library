@@ -1,5 +1,7 @@
 #include "Texture.hpp"
 
+#include "GLFW/glfw3.h"
+
 #include "stb_image.h"
 
 #include <iostream>
@@ -9,7 +11,7 @@ mylib::Texture::Texture()
     glGenTextures(1, &m_ID);
 }
 
-mylib::Texture::Texture(TextureDimension dimension, const char *filePath, bool flip)
+mylib::Texture::Texture(TextureDimension dimension, const char* filePath, bool flip)
 {
     glGenTextures(1, &m_ID);
     loadTexture(dimension, filePath, flip);
@@ -21,13 +23,13 @@ mylib::Texture::~Texture()
         glDeleteTextures(1, &m_ID);
 }
 
-mylib::Texture::Texture(Texture &&other) noexcept
+mylib::Texture::Texture(Texture&& other) noexcept
     : m_ID(other.m_ID), m_dimension(other.m_dimension), m_typeName(other.m_typeName)
 {
     other.m_ID = 0;
 }
 
-mylib::Texture &mylib::Texture::operator=(Texture &&other) noexcept
+mylib::Texture& mylib::Texture::operator=(Texture&& other) noexcept
 {
     if (this != &other) {
         if (m_ID) glDeleteTextures(1, &m_ID);
@@ -39,14 +41,18 @@ mylib::Texture &mylib::Texture::operator=(Texture &&other) noexcept
     return *this;
 }
 
-void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePath, bool flip)
+void mylib::Texture::loadTexture(TextureDimension dimension, const char* filePath, bool flip)
 {
+#ifdef MYLIB_DEBUG
+    double startTime = glfwGetTime();
+#endif
+
     m_dimension = static_cast<GLenum>(dimension);
 
     bind();
 
     stbi_set_flip_vertically_on_load(flip);
-    
+
     int width, height, nrChannels;
     unsigned char* data = stbi_load(filePath, &width, &height, &nrChannels, 4);
 
@@ -61,16 +67,16 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
 
         switch (m_dimension)
         {
-            case GL_TEXTURE_1D:
-            {
-                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-                break;
-            }
-            case GL_TEXTURE_2D:
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-                break;
-            }
+        case GL_TEXTURE_1D:
+        {
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            break;
+        }
+        case GL_TEXTURE_2D:
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            break;
+        }
         }
         glGenerateMipmap(m_dimension);
 
@@ -80,10 +86,20 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char *filePat
         std::cerr << "MYLIB::ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE\tPATH:" << filePath << std::endl;
 
     stbi_image_free(data);
+
+#ifdef MYLIB_DEBUG
+    double timeOfLoading = glfwGetTime() - startTime;
+    std::cout << "MYLIB::TEXTURE::LOADED_IN " << timeOfLoading * 1000 << "ms\n"
+        << "\tPATH: " << filePath << std::endl;
+#endif
 }
 
-void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data, size_t size)
+void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char* data, size_t size)
 {
+#ifdef MYLIB_DEBUG
+    double startTime = glfwGetTime();
+#endif
+
     m_dimension = static_cast<GLenum>(dimension);
 
     bind();
@@ -100,16 +116,16 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data
 
         switch (m_dimension)
         {
-            case GL_TEXTURE_1D:
-            {
-                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
-                break;
-            }
-            case GL_TEXTURE_2D:
-            {
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
-                break;
-            }
+        case GL_TEXTURE_1D:
+        {
+            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
+            break;
+        }
+        case GL_TEXTURE_2D:
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
+            break;
+        }
         }
         glGenerateMipmap(m_dimension);
 
@@ -119,10 +135,19 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char *data
         std::cerr << "MYLIB::ERROR::TEXTURE::FAILED_TO_LOAD_TEXTURE_FROM_MEMORY" << std::endl;
 
     stbi_image_free(decoded);
+
+#ifdef MYLIB_DEBUG
+    double loadingTime = glfwGetTime() - startTime;
+    std::cout << "MYLIB::TEXTURE::LOADED_IN " << loadingTime * 1000 << "ms" << std::endl;
+#endif
 }
 
-void mylib::Texture::loadTexture(TextureDimension dimension, int width, int height, unsigned char *data, GLenum format)
+void mylib::Texture::loadTexture(TextureDimension dimension, int width, int height, unsigned char* data, GLenum format)
 {
+#ifdef MYLIB_DEBUG
+    double startTime = glfwGetTime();
+#endif
+
     if (!data)
     {
         std::cerr << "MYLIB::ERROR::TEXTURE::LOADED_NULL_DATA" << std::endl;
@@ -138,20 +163,25 @@ void mylib::Texture::loadTexture(TextureDimension dimension, int width, int heig
 
     switch (m_dimension)
     {
-        case GL_TEXTURE_1D:
-        {
-            glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, format, GL_UNSIGNED_BYTE, data);
-            break;
-        }
-        case GL_TEXTURE_2D:
-        {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            break;
-        }
+    case GL_TEXTURE_1D:
+    {
+        glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, format, GL_UNSIGNED_BYTE, data);
+        break;
+    }
+    case GL_TEXTURE_2D:
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        break;
+    }
     }
     glGenerateMipmap(m_dimension);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, prevAlignment);
+
+#ifdef MYLIB_DEBUG
+    double timeOfLoading = glfwGetTime() - startTime;
+    std::cout << "MYLIB::TEXTURE::LOADED_IN " << timeOfLoading * 1000 << "ms" << std::endl;
+#endif
 }
 
 void mylib::Texture::bind(uint16_t slot) const
@@ -165,28 +195,8 @@ void mylib::Texture::unbind() const
     glBindTexture(m_dimension, 0);
 }
 
-GLuint mylib::Texture::ID() const
-{
-    return m_ID;
-}
-
-mylib::TextureType mylib::Texture::getTypeName() const
-{
-    return m_typeName;
-}
-
-void mylib::Texture::setTypeName(mylib::TextureType type)
-{
-    m_typeName = type;
-}
-
-constexpr GLenum mylib::Texture::toGL(TextureDimension dimension)
-{
-    return static_cast<GLenum>(dimension);
-}
-
 mylib::Sampler::Sampler(TextureDimension dimension)
-    : m_dimension{toGL(dimension)}
+    : m_dimension{ toGL(dimension) }
 {
     glGenSamplers(1, &m_ID);
 }
@@ -197,7 +207,7 @@ mylib::Sampler::~Sampler()
         glDeleteSamplers(1, &m_ID);
 }
 
-void mylib::Sampler::addWrapParameter(WrapDimension wrapDimension, WrapParam parameter)
+void mylib::Sampler::addWrapParameter(Wrap wrapDimension, WrapParam parameter)
 {
     glSamplerParameteri(m_ID, toGL(wrapDimension), toGL(parameter));
 }
@@ -215,29 +225,4 @@ void mylib::Sampler::bind(uint16_t slot) const
 void mylib::Sampler::unbind(uint16_t slot) const
 {
     glBindSampler(slot, 0);
-}
-
-constexpr GLenum mylib::Sampler::toGL(mylib::WrapDimension wrapDimension)
-{
-    return static_cast<GLenum>(wrapDimension);
-}
-
-constexpr GLenum mylib::Sampler::toGL(mylib::WrapParam param)
-{
-    return static_cast<GLenum>(param);
-}
-
-constexpr GLenum mylib::Sampler::toGL(mylib::MinMagFilter filter)
-{
-    return static_cast<GLenum>(filter);
-}
-
-constexpr GLenum mylib::Sampler::toGL(mylib::MinMagFilterParam param)
-{
-    return static_cast<GLenum>(param);
-}
-
-constexpr GLenum mylib::Sampler::toGL(TextureDimension dimension)
-{
-    return static_cast<GLenum>(dimension);
 }

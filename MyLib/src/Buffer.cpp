@@ -21,7 +21,8 @@ mylib::Buffer::Buffer(Buffer&& other) noexcept
 
 mylib::Buffer& mylib::Buffer::operator=(Buffer&& other) noexcept
 {
-    if (this != &other) {
+    if (this != &other)
+    {
         if (m_ID) glDeleteBuffers(1, &m_ID);
         m_ID = other.m_ID;
         m_size = other.m_size;
@@ -31,14 +32,14 @@ mylib::Buffer& mylib::Buffer::operator=(Buffer&& other) noexcept
     return *this;
 }
 
-void mylib::Buffer::fill(const BufferTarget target, GLsizeiptr size, const void *data, GLenum usage)
+void mylib::Buffer::fill(const BufferTarget target, GLsizeiptr size, const void* data, GLenum usage)
 {
     glBindBuffer(toGL(target), m_ID);
     glBufferData(toGL(target), size, data, usage);
     m_size = size;
 }
 
-void mylib::Buffer::update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void *data)
+void mylib::Buffer::update(const BufferTarget target, GLsizeiptr size, GLintptr offset, const void* data)
 {
     if (offset + size > m_size)
     {
@@ -49,29 +50,4 @@ void mylib::Buffer::update(const BufferTarget target, GLsizeiptr size, GLintptr 
     glBindBuffer(toGL(target), m_ID);
     glBufferSubData(toGL(target), offset, size, data);
     m_size = size;
-}
-
-void mylib::Buffer::bindAs(const BufferTarget target) const
-{
-    glBindBuffer(toGL(target), m_ID);
-}
-
-void mylib::Buffer::unbindAs(const BufferTarget target) const
-{
-    glBindBuffer(toGL(target), 0);
-}
-
-void mylib::Buffer::bindBase(const BufferTarget target, GLuint index) const
-{
-    glBindBufferBase(toGL(target), index, m_ID);
-}
-
-GLuint mylib::Buffer::ID() const
-{
-    return m_ID;
-}
-
-constexpr GLenum mylib::Buffer::toGL(BufferTarget target) const
-{
-    return static_cast<GLenum>(target);
 }

@@ -8,7 +8,7 @@ This library currently supports basic model loading for the glb (GLTF 2.0) forma
 # How to use the library
 This library is built using cmake and gives a template program setup with **C++23** and already linked with the library. To compile the program you simply need these commands in the terminal at the root of your depository:
 
-**PLEASE NOTE THAT THE FOLLOWING COMMANDS ARE TO BUILD WITH MINGW, IF YOU ARE USING OTHER GENERATORS TYPE ```cmake -G --help``` AND CHOOSE THE APPROPRIATE GENERATOR**
+**PLEASE NOTE THAT THE FOLLOWING COMMANDS HAVE BEEN TESTED WITH MINGW AND NINJA, IF YOU ARE USING OTHER GENERATORS TYPE ```cmake -G --help``` AND CHOOSE THE APPROPRIATE GENERATOR**
 ```
 cmake -S . -B build
 cmake --build build

@@ -9,7 +9,7 @@ mylib::Renderer::Renderer()
     glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
-void mylib::Renderer::draw(const mylib::VertexArray &VAO, GLuint count, const Shader &shader, Primitive primitive) const
+void mylib::Renderer::draw(const mylib::VertexArray& VAO, GLuint count, const Shader& shader, Primitive primitive) const
 {
     shader.bind();
 
@@ -17,7 +17,15 @@ void mylib::Renderer::draw(const mylib::VertexArray &VAO, GLuint count, const Sh
     glDrawArrays(toGL(primitive), 0, count);
 }
 
-static void setUpMeshDraw(const mylib::Mesh &mesh, const mylib::Shader &shader)
+void mylib::Renderer::drawIndexed(const mylib::VertexArray& VAO, GLuint count, const Shader& shader, Primitive primitive) const
+{
+    shader.bind();
+
+    VAO.bind();
+    glDrawElements(toGL(primitive), count, GL_UNSIGNED_INT, 0);
+}
+
+static void setUpMeshDraw(const mylib::Mesh& mesh, const mylib::Shader& shader)
 {
     shader.bind();
 
@@ -28,45 +36,45 @@ static void setUpMeshDraw(const mylib::Mesh &mesh, const mylib::Shader &shader)
         std::string name;
         switch (mesh.textures[i].getTypeName())
         {
-            case mylib::TextureType::NONE:
-            {
-                std::cerr << "MYLIB::ERROR::RENDERER::TEXTURE_HAS_NO_TYPE" << std::endl;
-                break;
-            }
-            case mylib::TextureType::DIFFUSE:
-            {
-                name = "tex_diffuse" + std::to_string(diffuseNr++);
-                break;
-            }
-            case mylib::TextureType::SPECULAR:
-            {
-                name = "tex_specular" + std::to_string(specularNr++);
-                break;
-            }
-            default:
-                std::cerr << "MYLIB::ERROR::RENDERER::UNSUPPORTED_TEXTURE" << std::endl;
+        case mylib::TextureType::NONE:
+        {
+            std::cerr << "MYLIB::ERROR::RENDERER::TEXTURE_HAS_NO_TYPE" << std::endl;
+            break;
+        }
+        case mylib::TextureType::DIFFUSE:
+        {
+            name = "tex_diffuse" + std::to_string(diffuseNr++);
+            break;
+        }
+        case mylib::TextureType::SPECULAR:
+        {
+            name = "tex_specular" + std::to_string(specularNr++);
+            break;
+        }
+        default:
+            std::cerr << "MYLIB::ERROR::RENDERER::UNSUPPORTED_TEXTURE" << std::endl;
         }
 
-        glUniform1i(glGetUniformLocation(shader.getID(), ("material." + name).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader.ID(), ("material." + name).c_str()), i);
         mesh.textures[i].bind(i);
     }
 
     mesh.getVAO().bind();
 }
 
-void mylib::Renderer::draw(const mylib::Mesh &mesh, const Shader &shader, Primitive primitive) const
+void mylib::Renderer::draw(const mylib::Mesh& mesh, const Shader& shader, Primitive primitive) const
 {
     setUpMeshDraw(mesh, shader);
     glDrawElements(toGL(primitive), mesh.indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-void mylib::Renderer::drawInstanced(const mylib::Mesh &mesh, const GLuint count, const Shader &shader, Primitive primitive) const
+void mylib::Renderer::drawInstanced(const mylib::Mesh& mesh, const GLuint count, const Shader& shader, Primitive primitive) const
 {
     setUpMeshDraw(mesh, shader);
     glDrawElementsInstanced(toGL(primitive), mesh.indices.size(), GL_UNSIGNED_INT, 0, count);
 }
 
-void mylib::Renderer::draw(const mylib::Model &model, const Shader &shader, Primitive primitive) const
+void mylib::Renderer::draw(const mylib::Model& model, const Shader& shader, Primitive primitive) const
 {
     const std::vector<mylib::Mesh>& meshes = model.getMeshes();
     for (const auto& mesh : meshes)
@@ -75,7 +83,7 @@ void mylib::Renderer::draw(const mylib::Model &model, const Shader &shader, Prim
     }
 }
 
-void mylib::Renderer::drawInstanced(const mylib::Model &model, const GLuint count, const Shader &shader, Primitive primitive) const
+void mylib::Renderer::drawInstanced(const mylib::Model& model, const GLuint count, const Shader& shader, Primitive primitive) const
 {
     const std::vector<mylib::Mesh>& meshes = model.getMeshes();
     for (const auto& mesh : meshes)
@@ -84,9 +92,14 @@ void mylib::Renderer::drawInstanced(const mylib::Model &model, const GLuint coun
     }
 }
 
-void mylib::Renderer::wireframe(bool state) const
+void mylib::Renderer::drawMode(mylib::DrawMode mode) const
 {
-    glPolygonMode(GL_FRONT_AND_BACK, (state) ? GL_LINE : GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, toGL(mode));
+}
+
+void mylib::Renderer::drawMode(mylib::Face face, mylib::DrawMode mode) const
+{
+    glPolygonMode(toGL(face), toGL(mode));
 }
 
 void mylib::Renderer::backgroundColor(glm::vec4 color) const
@@ -97,14 +110,4 @@ void mylib::Renderer::backgroundColor(glm::vec4 color) const
 void mylib::Renderer::backgroundColor(float r, float g, float b, float a) const
 {
     glClearColor(r, g, b, a);
-}
-
-void mylib::Renderer::clear() const
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-constexpr GLenum mylib::Renderer::toGL(Primitive primitive) const
-{
-    return static_cast<GLenum>(primitive);
 }

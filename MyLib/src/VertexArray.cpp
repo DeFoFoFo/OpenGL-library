@@ -14,13 +14,13 @@ mylib::VertexArray::~VertexArray()
         glDeleteVertexArrays(1, &m_ID);
 }
 
-mylib::VertexArray::VertexArray(VertexArray &&other) noexcept
-    : m_ID{other.m_ID}
+mylib::VertexArray::VertexArray(VertexArray&& other) noexcept
+    : m_ID{ other.m_ID }
 {
     other.m_ID = 0;
 }
 
-mylib::VertexArray &mylib::VertexArray::operator=(VertexArray &&other) noexcept
+mylib::VertexArray& mylib::VertexArray::operator=(VertexArray&& other) noexcept
 {
     if (this != &other) {
         if (m_ID) glDeleteVertexArrays(1, &m_ID);
@@ -30,7 +30,7 @@ mylib::VertexArray &mylib::VertexArray::operator=(VertexArray &&other) noexcept
     return *this;
 }
 
-void mylib::VertexArray::addBuffer(const Buffer &vb, const VertexBufferLayout &layout)
+void mylib::VertexArray::addBuffer(const Buffer& vb, const VertexBufferLayout& layout)
 {
     bind();
     vb.bindAs(mylib::BufferTarget::VBO);
@@ -43,7 +43,7 @@ void mylib::VertexArray::addBuffer(const Buffer &vb, const VertexBufferLayout &l
         glVertexAttribPointer(i, element.count, element.type, element.normalized, layout.getStride(), (const void*)offset);
         offset += element.count * VertexBufferElement::getSizeOfType(element.type);
     }
-    
+
 }
 
 void mylib::VertexArray::bind() const

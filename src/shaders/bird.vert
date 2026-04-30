@@ -4,6 +4,7 @@ struct Boid
 {
     vec3 position;
     vec3 velocity;
+    vec3 acceleration;
     mat4 model;
 };
 
