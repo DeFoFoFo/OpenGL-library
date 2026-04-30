@@ -34,7 +34,15 @@ enum class Face : GLenum
 {
     FRONT_AND_BACK = GL_FRONT_AND_BACK,   // Regardless of inside or outside the mesh
     FRONT          = GL_FRONT,            // Usually means the outside of the mesh
-    BACK           = GL_BACK              // Usually means the inside of the mesh
+    BACK           = GL_BACK,             // Usually means the inside of the mesh
+};
+
+enum class BufferBit : GLbitfield
+{
+    DEPTH       = GL_DEPTH_BUFFER_BIT,
+    COLOR       = GL_COLOR_BUFFER_BIT,
+    STENCIL     = GL_STENCIL_BUFFER_BIT,
+    FRAMEBUFFER = GL_FRAMEBUFFER_BARRIER_BIT,
 };
 
 class Renderer
@@ -53,11 +61,24 @@ public:
     void drawMode(mylib::Face face, mylib::DrawMode mode) const;
     void backgroundColor(glm::vec4 color) const;
     void backgroundColor(float r, float g, float b, float a) const;
-    void clear() const;
+    template <typename... Bits>
+    void clear(Bits... bits)
+    {
+        glClear(bitwiseOr(bits...));
+    }
 private:
-    constexpr inline GLenum toGL(Primitive primitive) const { return static_cast<GLenum>(primitive); };
+    constexpr inline GLenum toGL(Primitive primitive) const { return static_cast<GLenum>(primitive); }
     constexpr inline GLenum toGL(DrawMode mode) const { return static_cast<GLenum>(mode); }
     constexpr inline GLenum toGL(Face face) const { return static_cast<GLenum>(face); }
+    constexpr inline GLbitfield toGL(BufferBit bit) const { return static_cast<GLbitfield>(bit); }
+
+    template <typename... Bits>
+    constexpr GLenum bitwiseOr(Bits... bits)
+    {
+        static_assert((std::is_same_v<Bits, BufferBit> && ...),
+            "All arguments must be mylib::BufferBit");
+        return (toGL(bits) | ...);
+    }
 };
 
 } // namespace mylib

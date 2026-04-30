@@ -20,7 +20,6 @@ void mouseCallback(GLFWwindow* window, double xPos, double yPos);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 
 void processInput(mylib::InputManager* inputManager);
-int randomNumberWithin(int min, int max);
 
 mylib::ShaderProgram boidShader;
 
@@ -64,7 +63,7 @@ int main()
     camera.setSpeed(20.0f);
 
     mylib::ComputeShader compBoid{ "src/shaders/boid.comp" };
-    boidShader.assign( "src/shaders/fish.vert", "src/shaders/boid.frag" );
+    boidShader.assign("src/shaders/fish.vert", "src/shaders/boid.frag");
 
     mylib::ShaderProgram cubeShader{ "src/shaders/cube.vert", "src/shaders/cube.frag" };
     glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
@@ -84,13 +83,13 @@ int main()
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
     {
-        float xPos{ (float)randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
-        float yPos{ (float)randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
-        float zPos{ (float)randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float xPos{ (float)mylib::randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float yPos{ (float)mylib::randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
+        float zPos{ (float)mylib::randomNumberWithin(-BOX_SIZE / 2, BOX_SIZE / 2) };
 
-        float xVelocity{ (float)randomNumberWithin(-maxSpeed, maxSpeed) };
-        float yVelocity{ (float)randomNumberWithin(-maxSpeed, maxSpeed) };
-        float zVelocity{ (float)randomNumberWithin(-maxSpeed, maxSpeed) };
+        float xVelocity{ (float)mylib::randomNumberWithin(-maxSpeed, maxSpeed) };
+        float yVelocity{ (float)mylib::randomNumberWithin(-maxSpeed, maxSpeed) };
+        float zVelocity{ (float)mylib::randomNumberWithin(-maxSpeed, maxSpeed) };
 
         boids.emplace_back(
             glm::vec3(xPos, yPos, zPos),
@@ -179,7 +178,7 @@ int main()
         std::swap(readIdx, writeIdx);
 
         renderer.backgroundColor(0.2f, 0.2f, 0.8f, 1.0f);
-        renderer.clear();
+        renderer.clear(mylib::BufferBit::COLOR, mylib::BufferBit::DEPTH);
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
@@ -286,14 +285,4 @@ void processInput(mylib::InputManager* inputManager)
 
     if (inputManager->isJustPressed(Key::F5))
         boidShader.recompile();
-}
-
-int randomNumberWithin(int min, int max)
-{
-    if (max < min)
-        std::swap(min, max);
-
-    int range = max - min + 1;
-    int rnd = rand() % range;
-    return min + rnd;
 }

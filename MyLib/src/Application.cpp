@@ -17,3 +17,13 @@ mylib::Application::~Application()
 {
     glfwTerminate();
 }
+
+int mylib::randomNumberWithin(int min, int max)
+{
+    if (max < min)
+        std::swap(min, max);
+
+    int range = max - min + 1;
+    int rnd = rand() % range;
+    return min + rnd;
+}

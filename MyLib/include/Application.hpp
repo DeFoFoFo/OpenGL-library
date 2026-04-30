@@ -20,4 +20,6 @@ private:
     mylib::InputManager m_inputManager;
 };
 
+int randomNumberWithin(int min, int max);
+
 } //namespace mylib
