@@ -48,7 +48,6 @@ mylib::Shader::~Shader()
 std::string mylib::Shader::readFile(const std::string& filePath)
 {
     std::ifstream file{ filePath };
-    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     if (file) {
         std::stringstream ss;
