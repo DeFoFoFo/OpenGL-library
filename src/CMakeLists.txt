@@ -4,6 +4,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Main.cpp
 )
 
+target_compile_definitions(mylib PUBLIC
+    OPENGL_VERSION_MAJOR=4
+    OPENGL_VERSION_MINOR=3
+)
+
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
