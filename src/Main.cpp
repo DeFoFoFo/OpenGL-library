@@ -165,7 +165,7 @@ int main()
 
         processInput(&inputManager);
 
-        glCullFace(GL_FRONT);
+        glCullFace(GL_BACK);
 
         SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
         SSBO[writeIdx].bindBase(mylib::BufferTarget::SSBO, 1);
