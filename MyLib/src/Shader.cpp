@@ -27,6 +27,7 @@ mylib::Shader& mylib::Shader::operator=(Shader&& other) noexcept
     if (this != &other) {
         if (m_ID)
             glDeleteProgram(m_ID);
+
         m_ID = other.m_ID;
         m_uniforms = other.m_uniforms;
         m_fileNames = other.m_fileNames;
@@ -100,12 +101,17 @@ GLint mylib::Shader::getUniformLocation(const std::string& name)
         return it->second;
 
     GLint location = glGetUniformLocation(m_ID, name.c_str());
-#if DEBUG == true
+#ifdef MYLIB_DEBUG
     if (location == -1)
-        std::cerr << "MYLIB::ERROR::SHADER::UNIFORM_NOT_FOUND: " << name
-        << std::endl;
+        std::cerr << "MYLIB::ERROR::SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
 #endif
 
-    m_uniforms.insert({ name, location });
+    auto result = m_uniforms.insert({ name, location });
+#ifdef MYLIB_DEBUG
+    if (!result.second)
+    {
+        std::cerr << "MYLIB::ERROR::SHADER::UNIFORM_NOT_INSERTED: " << name << std::endl;
+    }
+#endif
     return location;
 }

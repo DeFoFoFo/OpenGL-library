@@ -22,7 +22,7 @@ mylib::Window::~Window()
 }
 
 mylib::Window::Window(Window&& source) noexcept
-    : m_handle{ source.m_handle }, m_width{ source.m_width }, m_height{ source.m_height }
+    : m_handle{ source.m_handle }, m_name{ source.m_name }, m_width{ source.m_width }, m_height{ source.m_height }
 {
     source.m_handle = nullptr;
     source.m_name = "";
@@ -34,7 +34,9 @@ mylib::Window& mylib::Window::operator=(Window&& source) noexcept
 {
     if (this != &source)
     {
-        if (m_handle) glfwDestroyWindow(m_handle);
+        if (m_handle)
+            glfwDestroyWindow(m_handle);
+        
         m_handle = source.m_handle;
         m_name = source.m_name;
         m_width = source.m_width;
@@ -97,12 +99,11 @@ void APIENTRY glDebugOutput(GLenum source,
 void mylib::Window::createWindow(const int32_t width, const int32_t height, const std::string_view name, bool fullscreen)
 {
     if (m_handle)
-    {
         glfwDestroyWindow(m_handle);
-        m_width = width;
-        m_height = height;
-        m_name = name;
-    }
+
+    m_width = width;
+    m_height = height;
+    m_name = name;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR);

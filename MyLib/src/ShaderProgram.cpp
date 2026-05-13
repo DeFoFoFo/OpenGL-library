@@ -45,7 +45,10 @@ void mylib::ShaderProgram::assign(const std::string& vsFilePath, const std::stri
 #endif
 
     if (m_ID != 0)
+    {
         glDeleteProgram(m_ID);
+        m_uniforms.clear();
+    }
 
     std::string vsCode{ readFile(vsFilePath) }, fsCode{ readFile(fsFilePath) };
 
@@ -88,7 +91,10 @@ void mylib::ShaderProgram::assign(const std::string& vsFilePath, const std::stri
 #endif
 
     if (m_ID != 0)
+    {
         glDeleteProgram(m_ID);
+        m_uniforms.clear();
+    }
 
     std::string vsCode{ readFile(vsFilePath) }, fsCode{ readFile(fsFilePath) }, gsCode{ readFile(gsFilePath) };
 
@@ -131,7 +137,6 @@ void mylib::ShaderProgram::assign(const std::string& vsFilePath, const std::stri
 
 void mylib::ShaderProgram::recompile()
 {
-    m_uniforms.clear();
     if (m_fileNames.size() == 2)
         assign(m_fileNames[0], m_fileNames[1]);
     else if (m_fileNames.size() == 3)

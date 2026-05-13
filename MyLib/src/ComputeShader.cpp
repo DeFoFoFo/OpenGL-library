@@ -42,7 +42,10 @@ void mylib::ComputeShader::assign(const std::string& filePath)
 #endif
 
     if (m_ID != 0)
+    {
         glDeleteProgram(m_ID);
+        m_uniforms.clear();
+    }
 
     std::string code{ readFile(filePath) };
 
@@ -71,7 +74,6 @@ void mylib::ComputeShader::assign(const std::string& filePath)
 
 void mylib::ComputeShader::recompile()
 {
-    m_uniforms.clear();
     if (!m_fileNames.empty())
         assign(m_fileNames[0]);
 }
