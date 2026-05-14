@@ -41,6 +41,21 @@ mylib::Texture& mylib::Texture::operator=(Texture&& other) noexcept
     return *this;
 }
 
+static void addDefault1DTextureFilters()
+{
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+static void addDefault2DTextureFilters()
+{
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
 void mylib::Texture::loadTexture(TextureDimension dimension, const char* filePath, bool flip)
 {
 #ifdef MYLIB_DEBUG
@@ -69,11 +84,13 @@ void mylib::Texture::loadTexture(TextureDimension dimension, const char* filePat
         {
         case GL_TEXTURE_1D:
         {
+            addDefault1DTextureFilters();
             glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             break;
         }
         case GL_TEXTURE_2D:
         {
+            addDefault2DTextureFilters();
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             break;
         }
@@ -118,11 +135,13 @@ void mylib::Texture::loadTexture(TextureDimension dimension, unsigned char* data
         {
         case GL_TEXTURE_1D:
         {
+            addDefault1DTextureFilters();
             glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
             break;
         }
         case GL_TEXTURE_2D:
         {
+            addDefault2DTextureFilters();
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, decoded);
             break;
         }
@@ -165,11 +184,13 @@ void mylib::Texture::loadTexture(TextureDimension dimension, int width, int heig
     {
     case GL_TEXTURE_1D:
     {
+        addDefault1DTextureFilters();
         glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA8, width, 0, format, GL_UNSIGNED_BYTE, data);
         break;
     }
     case GL_TEXTURE_2D:
     {
+        addDefault2DTextureFilters();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         break;
     }

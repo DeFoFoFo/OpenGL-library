@@ -47,19 +47,6 @@ int main()
 
     glfwSwapInterval(1);
 
-    mylib::Sampler sampler2D{ mylib::TextureDimension::DIM2 };
-    sampler2D.addWrapParameter(mylib::Wrap::WRAP_R, mylib::WrapParam::REPEAT);
-    sampler2D.addWrapParameter(mylib::Wrap::WRAP_S, mylib::WrapParam::REPEAT);
-    sampler2D.addMagParameter(mylib::MinMagFilter::MAG, mylib::MinMagFilterParam::NEAREST);
-    sampler2D.addMagParameter(mylib::MinMagFilter::MIN, mylib::MinMagFilterParam::NEAREST);
-    GLint maxUnits;
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxUnits);
-    std::cout << "Max texture units: " << maxUnits << std::endl;
-    for (GLint i{}; i < maxUnits; ++i)
-    {
-        sampler2D.bind(i);
-    }
-
     camera.setSpeed(20.0f);
 
     mylib::ComputeShader compBoid{ "src/shaders/boid.comp" };

@@ -26,11 +26,11 @@ enum class TextureDimension : GLenum
 
 enum class Wrap : GLenum
 {
-    WRAP_R = GL_TEXTURE_WRAP_R,   // Wrap the texture in the x dimension
+    WRAP_S = GL_TEXTURE_WRAP_S,   // Wrap the texture in the x dimension
     WRAP_X = GL_TEXTURE_WRAP_R,   // Wrap the texture in the x dimension
-    WRAP_S = GL_TEXTURE_WRAP_S,   // Wrap the texture in the y dimension
+    WRAP_T = GL_TEXTURE_WRAP_T,   // Wrap the texture in the y dimension
     WRAP_Y = GL_TEXTURE_WRAP_S,   // Wrap the texture in the y dimension
-    WRAP_T = GL_TEXTURE_WRAP_T,   // Wrap the texture in the z dimension
+    WRAP_R = GL_TEXTURE_WRAP_R,   // Wrap the texture in the z dimension
     WRAP_Z = GL_TEXTURE_WRAP_T,   // Wrap the texture in the z dimension
 };
 
