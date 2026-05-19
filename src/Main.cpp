@@ -57,7 +57,7 @@ int main()
     cubeShader.bind();
     cubeShader.setUniform(color, "uColor");
 
-    mylib::Model bird{ "assets/Clown_fish.glb" };
+    mylib::Model boidModel{ "assets/Pacific_blue_tang.glb" };
 
     const float radiusOfInfluence = 15.0f;
     const float radiusOfSeparation = 10.0f;
@@ -65,7 +65,7 @@ int main()
     const float minSpeed = 3.0f;
     const float maxForce = 10.0f;
 
-    uint32_t numBoids{ 30000 };
+    uint32_t numBoids{ 20000 };
     std::vector<Boid> boids;
     boids.reserve(numBoids);
     for (size_t i{}; i < numBoids; ++i)
@@ -149,6 +149,7 @@ int main()
         dT = std::min(time - lastTime, 0.2f);
         lastTime = time;
         // std::cout << 1/dT << " " << dT * 1000 << std::endl;
+        glfwSetWindowTitle(window.getHandle(), std::string{window.getName() + " " + std::to_string(1/dT)}.c_str());
 
         processInput(&inputManager);
 
@@ -164,7 +165,7 @@ int main()
 
         std::swap(readIdx, writeIdx);
 
-        renderer.backgroundColor(0.2f, 0.2f, 0.8f, 1.0f);
+        renderer.backgroundColor(0.2f, 0.8f, 0.5f, 1.0f);
         renderer.clear(mylib::BufferBit::COLOR, mylib::BufferBit::DEPTH);
 
         glm::mat4 model = glm::mat4(1.0f);
@@ -177,16 +178,16 @@ int main()
         boidShader.setUniform(projection, "projection");
         boidShader.setUniform(time, "time");
 
-        const std::vector<mylib::Mesh>& birdMeshes = bird.getMeshes();
+        const std::vector<mylib::Mesh>& boidModelMeshes = boidModel.getMeshes();
 
-        for (const auto& mesh : birdMeshes)
+        for (const auto& mesh : boidModelMeshes)
         {
             mesh.getVAO();
             SSBO[readIdx].bindAs(mylib::BufferTarget::SSBO);
             SSBO[readIdx].bindBase(mylib::BufferTarget::SSBO, 0);
         }
 
-        renderer.drawInstanced(bird, numBoids, boidShader);
+        renderer.drawInstanced(boidModel, numBoids, boidShader);
 
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(BOX_SIZE / 2));
